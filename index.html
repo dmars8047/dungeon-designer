@@ -1,19 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
-    <link href="./styles.css" rel="stylesheet">
-    <title>Hello World!</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>,
-    Chromium <span id="chrome-version"></span>,
-    and Electron <span id="electron-version"></span>.
 
-    <!-- You can also require other files to run in this process -->
-    <script src="./renderer.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <!-- CSS only -->
+  <link href="./styles.css" rel="stylesheet">
+  <title>Dugeon Designer</title>
+</head>
+
+<body>
+  <div class="card">
+
+    <header>
+      <h1>Dugeon&nbsp;Designer</h1>
+      <div>
+        <button id="clear-canvas-button">Clear&nbsp;Canvas</button>
+        <button id="export-canvas-button" class="primary-button">Export&nbsp;Canvas</button>
+      </div>
+    </header>
+    <div class="card_body">
+      <aside>
+        <label>Tiles</label>
+        <div class="tileset-container">
+          <img id="tileset-source" crossorigin />
+          <div class="tileset-container_selection"></div>
+        </div>
+      </aside>
+      <div class="card_right-column">
+        <!-- The main canvas -->
+        <canvas width="480" height="480">
+        </canvas>
+        <p class="instructions">
+          <strong>Click</strong> to paint.
+          <strong>Shift+Click</strong> to remove.
+        </p>
+        <!-- UI for layers -->
+        <div>
+          <label>Editing Layer:</label>
+          <ul class="layers">
+            <li><button id="layer-button-top" class="layer" tile-layer="2">Top Layer</button></li>
+            <li><button id="layer-button-middle" class="layer" tile-layer="1">Middle Layer</button></li>
+            <li><button id="layer-button-bottom" class="layer" tile-layer="0">Bottom Layer</button></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- You can also require other files to run in this process -->
+  <script src="./renderer.js"></script>
+</body>
+
 </html>
