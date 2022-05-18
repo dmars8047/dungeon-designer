@@ -1,0 +1,16 @@
+{
+  "name": "capricious-extent-mix-hwwi3",
+  "productName": "capricious-extent-mix-hwwi3",
+  "description": "My Electron application description",
+  "keywords": [],
+  "main": "./main.js",
+  "version": "1.0.0",
+  "author": "danielmarshall",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "18.0.3"
+  }
+}
