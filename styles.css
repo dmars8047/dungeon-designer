@@ -38,6 +38,10 @@ body {
    padding: 16px;
 }
 
+.tile-canvas:hover {
+   transform: scale(1.3);
+}
+
 .card aside {
    padding-left: 16px;
    padding-right: 16px;
@@ -59,11 +63,12 @@ body {
    padding-right: 16px;
 }
 
-canvas {
+#main-canvas {
    background: #f4f8f9;
+   border-style: solid;
 }
 
-.tileset-container {
+#tileset-container {
    position: relative;
 }
 
@@ -115,6 +120,18 @@ canvas {
    background: #4e84fa;
    border-top: 4px solid transparent;
    border-bottom: 4px solid #3166c7;
+   color: #fff;
+   border-radius: 6px;
+   outline: 0;
+   padding: 6px 16px;
+   cursor: pointer;
+}
+
+.secondary-button {
+   border: 0;
+   background: #d8cc64;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid #c7b831;
    color: #fff;
    border-radius: 6px;
    outline: 0;

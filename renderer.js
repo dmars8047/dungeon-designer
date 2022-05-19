@@ -1,11 +1,14 @@
-var canvas = document.querySelector("canvas");
-var tilesetContainer = document.querySelector(".tileset-container");
+var mainCanvas = document.getElementById("main-canvas");
+// var tilesetContainer = document.querySelector(".tileset-container");
 var tilesetSelection = document.querySelector(".tileset-container_selection");
 var tilesetImage = document.querySelector("#tileset-source");
 var topLayerButton = document.getElementById("layer-button-top");
 var clearCanvasButton = document.getElementById("clear-canvas-button");
-
 var selectedTile = [0, 0]; //Which tile we will paint from the menu
+
+var tilesetContainer = document.getElementById("tileset-container");
+var tileSetSourceImage = new Image();
+var tileSize = 32;
 
 var isMouseDown = false;
 var currentLayer = 0;
@@ -22,11 +25,11 @@ var layers = [
 ];
 
 //Select tile from the Tiles grid
-tilesetContainer.addEventListener("mousedown", (event) => {
-    selectedTile = getCoords(event);
-    tilesetSelection.style.left = selectedTile[0] * 32 + "px";
-    tilesetSelection.style.top = selectedTile[1] * 32 + "px";
-});
+// tilesetContainer.addEventListener("mousedown", (event) => {
+//     selectedTile = getCoords(event);
+//     tilesetSelection.style.left = selectedTile[0] * 32 + "px";
+//     tilesetSelection.style.top = selectedTile[1] * 32 + "px";
+// });
 
 //Handler for placing new tiles on the map
 function addTile(mouseEvent) {
@@ -42,17 +45,17 @@ function addTile(mouseEvent) {
 }
 
 //Bind mouse events for painting (or removing) tiles on click/drag
-canvas.addEventListener("mousedown", () => {
+mainCanvas.addEventListener("mousedown", () => {
     isMouseDown = true;
 });
-canvas.addEventListener("mouseup", () => {
+mainCanvas.addEventListener("mouseup", () => {
     isMouseDown = false;
 });
-canvas.addEventListener("mouseleave", () => {
+mainCanvas.addEventListener("mouseleave", () => {
     isMouseDown = false;
 });
-canvas.addEventListener("mousedown", addTile);
-canvas.addEventListener("mousemove", (event) => {
+mainCanvas.addEventListener("mousedown", addTile);
+mainCanvas.addEventListener("mousemove", (event) => {
     if (isMouseDown) {
         addTile(event);
     }
@@ -68,7 +71,7 @@ function getCoords(e) {
 
 //converts data to image:data string and pipes into new browser tab
 function exportImage() {
-    var data = canvas.toDataURL();
+    var data = mainCanvas.toDataURL();
     var image = new Image();
     image.src = data;
 
@@ -91,8 +94,8 @@ function setLayer(newLayer) {
 }
 
 function draw() {
-    var ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var ctx = mainCanvas.getContext("2d");
+    ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
     var size_of_crop = 32;
 
@@ -118,10 +121,10 @@ function draw() {
     });
 }
 
-clearCanvasButton.onclick = () => { clearCanvas(); }
+clearCanvasButton.onclick = () => { clearMainCanvas(); }
 
 //Reset state to empty
-function clearCanvas() {
+function clearMainCanvas() {
     layers = [{}, {}, {}];
     draw();
 }
@@ -133,4 +136,21 @@ function clearCanvas() {
 //    setLayer(0);
 // }
 
-tilesetImage.src = "./TileEditorSpritesheet.2x_2.png";
+function InitTileSelector() {
+    for (y = 0; y < tileSetSourceImage.height; y += tileSize) {
+        for (x = 0; x < tileSetSourceImage.width; x += tileSize) {
+            const newCanvas = document.createElement("canvas");
+            newCanvas.width = tileSize;
+            newCanvas.height = tileSize;
+            newCanvas.classList.add('tile-canvas');
+            var ctx = newCanvas.getContext("2d");
+            ctx.drawImage(tileSetSourceImage, x, y, tileSize, tileSize, 0, 0, tileSize, tileSize);
+            tilesetContainer.append(newCanvas);
+        }
+    }
+}
+
+tileSetSourceImage.onload = () => { InitTileSelector(); };
+
+tileSetSourceImage.src = "./TileEditorSpritesheet.2x_2.png";
+// tilesetImage.src = "./TileEditorSpritesheet.2x_2.png";

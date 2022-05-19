@@ -13,25 +13,31 @@
 
 <body>
   <div class="card">
-
     <header>
       <h1>Dugeon&nbsp;Designer</h1>
       <div>
-        <button id="clear-canvas-button">Clear&nbsp;Canvas</button>
+        <label for="tilesizes">Tile Size:</label>
+        <select name="tilesizes" id="tile-size-select">
+          <option value="16">16</option>
+          <option value="32">32</option>
+          <option value="48">48</option>
+          <option value="64">64</option>
+        </select>
+        <button id="clear-canvas-button" class="secondary-button">Clear&nbsp;Canvas</button>
         <button id="export-canvas-button" class="primary-button">Export&nbsp;Canvas</button>
       </div>
     </header>
     <div class="card_body">
       <aside>
         <label>Tiles</label>
-        <div class="tileset-container">
-          <img id="tileset-source" crossorigin />
-          <div class="tileset-container_selection"></div>
+        <div id="tileset-container">
+          <!-- <img id="tileset-source" /> -->
+          <!-- <div class="tileset-container_selection"></div> -->
         </div>
       </aside>
       <div class="card_right-column">
         <!-- The main canvas -->
-        <canvas width="480" height="480">
+        <canvas id="main-canvas" width="1280" height="720">
         </canvas>
         <p class="instructions">
           <strong>Click</strong> to paint.
