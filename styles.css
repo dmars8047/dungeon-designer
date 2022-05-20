@@ -2,17 +2,35 @@
    box-sizing: border-box;
 }
 
+.flex-container {
+   display: flex;
+}
+
+.flex-container>div {
+   margin-left: 8px;
+   margin-top: 8px;
+}
+
+.flex-container>div>label {
+   margin: auto;
+}
+
+.flex-container>div>select {
+   margin: auto;
+}
+
+
 html {
    height: 100%
 }
 
 body {
-   font-family: 'Source Sans Pro', sans-serif;
+   font-family: 'Space Mono', monospace;
    padding: 1em;
-   background: linear-gradient(180deg, #FFF9E4 0%, #EEEED8 100%);
+   background: linear-gradient(180deg, #575655 0%, #30302f 100%);
    display: flex;
    justify-content: space-around;
-   color: #2f2c48;
+   color: #f9d339;
 }
 
 .instructions {
@@ -24,7 +42,7 @@ body {
 }
 
 .card {
-   background: #fff;
+   background: #202020;
    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
    padding-bottom: 16px;
 }
@@ -65,7 +83,6 @@ body {
 
 #main-canvas {
    background: #f4f8f9;
-   border-style: solid;
 }
 
 #tileset-container {
@@ -89,7 +106,7 @@ body {
 
 .layers button {
    appearance: none;
-   font-family: inherit;
+   font-family: 'Space Mono', monospace;
    outline: 0;
    background: transparent;
    border: 0;
@@ -105,16 +122,6 @@ body {
    color: #0884f1;
 }
 
-.button-as-link {
-   appearance: none;
-   text-decoration: underline;
-   background: transparent;
-   color: #7f808e;
-   border: 0;
-   outline: 0;
-   cursor: pointer;
-}
-
 .primary-button {
    border: 0;
    background: #4e84fa;
@@ -127,12 +134,22 @@ body {
    cursor: pointer;
 }
 
+select {
+   border: 0;
+   outline: 0;
+   background: #94969c;
+   color: #fff;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid #696e77;
+   border-radius: 6px;
+}
+
 .secondary-button {
    border: 0;
-   background: #d8cc64;
+   background: #f9d339;
    border-top: 4px solid transparent;
-   border-bottom: 4px solid #c7b831;
-   color: #fff;
+   border-bottom: 4px solid #f39646;
+   color: #111;
    border-radius: 6px;
    outline: 0;
    padding: 6px 16px;

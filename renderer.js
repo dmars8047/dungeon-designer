@@ -1,8 +1,6 @@
 var mainCanvas = document.getElementById("main-canvas");
-// var tilesetContainer = document.querySelector(".tileset-container");
 var tilesetSelection = document.querySelector(".tileset-container_selection");
 var tilesetImage = document.querySelector("#tileset-source");
-var topLayerButton = document.getElementById("layer-button-top");
 var clearCanvasButton = document.getElementById("clear-canvas-button");
 var selectedTile = [0, 0]; //Which tile we will paint from the menu
 
@@ -10,19 +8,15 @@ var tilesetContainer = document.getElementById("tileset-container");
 var tileSetSourceImage = new Image();
 var tileSize = 32;
 
+var layerSelect = document.getElementById("layer-select");
+
 var isMouseDown = false;
 var currentLayer = 0;
-var layers = [
-    //Bottom
-    {
-        //Structure is "x-y": ["tileset_x", "tileset_y"]
-        //EXAMPLE: "1-1": [3, 4],
-    },
-    //Middle
-    {},
-    //Top
-    {}
-];
+var layers = [{}, {}];
+
+layerSelect.onchange = (event) => {
+    setLayer(layerSelect.value);
+};
 
 //Select tile from the Tiles grid
 // tilesetContainer.addEventListener("mousedown", (event) => {
@@ -79,8 +73,6 @@ function exportImage() {
     w.document.write(image.outerHTML);
 }
 
-topLayerButton.onclick = () => { setLayer(2); };
-
 function setLayer(newLayer) {
     //Update the layer
     currentLayer = newLayer;
@@ -107,9 +99,9 @@ function draw() {
             var [tilesheetX, tilesheetY] = layer[key];
 
             ctx.drawImage(
-                tilesetImage,
-                tilesheetX * 32,
-                tilesheetY * 32,
+                tileSetSourceImage,
+                tilesheetX,
+                tilesheetY,
                 size_of_crop,
                 size_of_crop,
                 positionX * 32,
@@ -129,20 +121,14 @@ function clearMainCanvas() {
     draw();
 }
 
-//Initialize app when tileset source is done loading
-// tilesetImage.onload = function() {
-//    layers = defaultState;
-//    draw();
-//    setLayer(0);
-// }
-
 function InitTileSelector() {
-    for (y = 0; y < tileSetSourceImage.height; y += tileSize) {
-        for (x = 0; x < tileSetSourceImage.width; x += tileSize) {
+    for (let y = 0; y < tileSetSourceImage.height; y += tileSize) {
+        for (let x = 0; x < tileSetSourceImage.width; x += tileSize) {
             const newCanvas = document.createElement("canvas");
             newCanvas.width = tileSize;
             newCanvas.height = tileSize;
             newCanvas.classList.add('tile-canvas');
+            newCanvas.onclick = () => { selectTile(x, y); };
             var ctx = newCanvas.getContext("2d");
             ctx.drawImage(tileSetSourceImage, x, y, tileSize, tileSize, 0, 0, tileSize, tileSize);
             tilesetContainer.append(newCanvas);
@@ -150,7 +136,10 @@ function InitTileSelector() {
     }
 }
 
+function selectTile(x, y) {
+    selectedTile = [x, y];
+}
+
 tileSetSourceImage.onload = () => { InitTileSelector(); };
 
-tileSetSourceImage.src = "./TileEditorSpritesheet.2x_2.png";
-// tilesetImage.src = "./TileEditorSpritesheet.2x_2.png";
+tileSetSourceImage.src = "./RoomTiles.png";
