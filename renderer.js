@@ -18,12 +18,22 @@ layerSelect.onchange = (event) => {
     setLayer(layerSelect.value);
 };
 
-//Select tile from the Tiles grid
-// tilesetContainer.addEventListener("mousedown", (event) => {
-//     selectedTile = getCoords(event);
-//     tilesetSelection.style.left = selectedTile[0] * 32 + "px";
-//     tilesetSelection.style.top = selectedTile[1] * 32 + "px";
-// });
+function selectTile(x, y) {
+
+    let oldCanvas = document.getElementById("tile-selection-canvas-" + selectedTile[0] + "-" + selectedTile[1]);
+    let newCanvas = document.getElementById("tile-selection-canvas-" + x + "-" + y);
+
+    if (oldCanvas != null && oldCanvas.classList != null) {
+        if (oldCanvas.classList.contains("selected-tile"))
+        {
+            oldCanvas.classList.remove("selected-tile");
+        }
+    }
+
+    selectedTile = [x, y];
+    selectTile.classList = [];
+    newCanvas.classList.add("selected-tile");
+}
 
 //Handler for placing new tiles on the map
 function addTile(mouseEvent) {
@@ -104,8 +114,8 @@ function draw() {
                 tilesheetY,
                 size_of_crop,
                 size_of_crop,
-                positionX * 32,
-                positionY * 32,
+                positionX * tileSize,
+                positionY * tileSize,
                 size_of_crop,
                 size_of_crop
             );
@@ -128,16 +138,13 @@ function InitTileSelector() {
             newCanvas.width = tileSize;
             newCanvas.height = tileSize;
             newCanvas.classList.add('tile-canvas');
+            newCanvas.id = "tile-selection-canvas-" + x + "-" + y;
             newCanvas.onclick = () => { selectTile(x, y); };
             var ctx = newCanvas.getContext("2d");
             ctx.drawImage(tileSetSourceImage, x, y, tileSize, tileSize, 0, 0, tileSize, tileSize);
             tilesetContainer.append(newCanvas);
         }
     }
-}
-
-function selectTile(x, y) {
-    selectedTile = [x, y];
 }
 
 tileSetSourceImage.onload = () => { InitTileSelector(); };
