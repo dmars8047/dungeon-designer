@@ -3,6 +3,8 @@ var tilesetSelection = document.querySelector(".tileset-container_selection");
 var tilesetImage = document.querySelector("#tileset-source");
 var clearCanvasButton = document.getElementById("clear-canvas-button");
 var selectedTile = [0, 0]; //Which tile we will paint from the menu
+var importTilesetButton = document.getElementById("open-file-button");
+
 
 var tilesetContainer = document.getElementById("tileset-container");
 var tileSetSourceImage = new Image();
@@ -14,18 +16,26 @@ var isMouseDown = false;
 var currentLayer = 0;
 var layers = [{}, {}];
 
+importTilesetButton.addEventListener('click', async () => {
+    const filePath = await window.electronAPI.openFile();
+
+    if (filePath) {
+        clearMainCanvas();
+        clearTileSet();
+        tileSetSourceImage.src = filePath;
+    }
+});
+
 layerSelect.onchange = (event) => {
     setLayer(layerSelect.value);
 };
 
 function selectTile(x, y) {
-
     let oldCanvas = document.getElementById("tile-selection-canvas-" + selectedTile[0] + "-" + selectedTile[1]);
     let newCanvas = document.getElementById("tile-selection-canvas-" + x + "-" + y);
 
     if (oldCanvas != null && oldCanvas.classList != null) {
-        if (oldCanvas.classList.contains("selected-tile"))
-        {
+        if (oldCanvas.classList.contains("selected-tile")) {
             oldCanvas.classList.remove("selected-tile");
         }
     }
@@ -131,6 +141,12 @@ function clearMainCanvas() {
     draw();
 }
 
+function clearTileSet() {
+    while (tilesetContainer.firstChild) {
+        tilesetContainer.removeChild(tilesetContainer.firstChild);
+    }
+}
+
 function InitTileSelector() {
     for (let y = 0; y < tileSetSourceImage.height; y += tileSize) {
         for (let x = 0; x < tileSetSourceImage.width; x += tileSize) {
@@ -148,5 +164,3 @@ function InitTileSelector() {
 }
 
 tileSetSourceImage.onload = () => { InitTileSelector(); };
-
-tileSetSourceImage.src = "./RoomTiles.png";
