@@ -47,7 +47,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1920,
     height: 1080,
-    icon: './Assets/dungeondesignericon.ico',
+    icon: './Assets/dungeondesignericon.png',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
