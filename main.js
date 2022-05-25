@@ -4,43 +4,7 @@ const path = require('path')
 
 const isMac = process.platform === 'darwin'
 
-const template = [
-  ...(isMac ? [{
-    label: app.name,
-    submenu: [
-      { role: 'about' },
-      { role: 'quit' }
-    ]
-  }] : []),
-  // { role: 'fileMenu' }
-  {
-    label: 'File',
-    submenu: [
-      { label: 'Save' },
-      { label: 'Save As' },
-      { label: 'Load' },
-      { label: 'Export' },
-      isMac ? { role: 'close' } : { role: 'quit' }
-    ]
-  },
-  {
-    label: 'Edit',
-    submenu: [
-      { role: 'undo' },
-      { role: 'redo' }
-    ]
-  },
-  {
-    label: 'Window',
-    submenu: [
-      { role: 'minimize' },
-      { role: 'togglefullscreen' }
-    ]
-  }
-]
-
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
+let projectFilePath = '';
 
 function createWindow() {
   // Create the browser window.
@@ -53,11 +17,49 @@ function createWindow() {
     }
   })
 
+  const template = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { role: 'quit' }
+      ]
+    }] : []),
+    // { role: 'fileMenu' }
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Save', click: async () => { saveProject(mainWindow) } },
+        { label: 'Save As' },
+        { label: 'Load' },
+        { label: 'Export' },
+        isMac ? { role: 'close' } : { role: 'quit' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'togglefullscreen' }
+      ]
+    }
+  ]
+
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
 
   // Open the DevTools.
-  //mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished
@@ -65,6 +67,7 @@ function createWindow() {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   ipcMain.handle('dialog:openFile', handleFileOpen)
+  ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); })
   createWindow()
 
   app.on('activate', function () {
@@ -88,4 +91,30 @@ async function handleFileOpen() {
   } else {
     return filePaths[0]
   }
+}
+
+async function saveProject(mainWindow) {
+
+  if (!projectFilePath) {
+    const { canceled, filePath } = await dialog.showSaveDialog();
+
+    if (canceled) {
+      return
+    }
+    else {
+      projectFilePath = filePath;
+    }
+  }
+
+  mainWindow.webContents.send('save-project', projectFilePath);
+}
+
+async function saveProjectFile(payload) {
+  const fs = require('fs');
+  
+  fs.writeFile(projectFilePath, payload, err => {
+    if (err) {
+      console.error(err);
+    }
+  });
 }

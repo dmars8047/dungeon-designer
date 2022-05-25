@@ -163,4 +163,9 @@ function InitTileSelector() {
     }
 }
 
+window.electronAPI.saveProject((event, value) => {
+    console.log('hello');
+    event.sender.send('project:saveToFile', 'test')
+})
+
 tileSetSourceImage.onload = () => { InitTileSelector(); };
