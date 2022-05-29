@@ -3,14 +3,33 @@ const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
 const path = require('path')
 
 const isMac = process.platform === 'darwin'
+let landingWindow;
+let mainWindow;
 
 let projectFilePath = '';
 
-function createWindow() {
+function createLandingWindow() {
+  landingWindow = new BrowserWindow({
+    width: 500,
+    height: 300,
+    show: true,
+    icon: './Assets/dungeondesignericon.png',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+
+  landingWindow.loadFile('landing.html')
+  // landingWindow.webContents.openDevTools()
+}
+
+function createMainWindow() {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1920,
     height: 1080,
+    show: false,
     icon: './Assets/dungeondesignericon.png',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
@@ -25,13 +44,11 @@ function createWindow() {
         { role: 'quit' }
       ]
     }] : []),
-    // { role: 'fileMenu' }
     {
       label: 'File',
       submenu: [
-        { label: 'Save', click: async () => { saveProject(mainWindow) } },
-        { label: 'Save As' },
-        { label: 'Load' },
+        { label: 'Save', click: async () => { handleSaveProject(mainWindow) } },
+        { label: 'Load', click: async () => { handleOpenProject(mainWindow) } },
         { label: 'Export' },
         isMac ? { role: 'close' } : { role: 'quit' }
       ]
@@ -52,11 +69,11 @@ function createWindow() {
     }
   ]
 
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 
   // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  mainWindow.loadFile('main.html')
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
@@ -66,9 +83,13 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  ipcMain.handle('dialog:openFile', handleFileOpen)
+  ipcMain.handle('dialog:openFile', handleFileOpen);
+  ipcMain.handle('project:openProject', handleOpenProjectFromLanding);
+  ipcMain.handle('project:newProject', handleNewProject);
+  ipcMain.handle('app:quit', handleAppQuit);
   ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); })
-  createWindow()
+  createMainWindow();
+  createLandingWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -84,19 +105,37 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
+async function handleNewProject() {
+
+}
+
 async function handleFileOpen() {
-  const { canceled, filePaths } = await dialog.showOpenDialog()
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    filters: [{
+      name: 'Image File',
+      extensions: ['png']
+    }]
+  });
+
   if (canceled) {
     return
   } else {
-    return filePaths[0]
+    return filePaths[0];
   }
 }
 
-async function saveProject(mainWindow) {
+async function handleAppQuit() {
+  app.quit();
+}
 
+async function handleSaveProject(mainWindow) {
   if (!projectFilePath) {
-    const { canceled, filePath } = await dialog.showSaveDialog();
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      filters: [{
+        name: 'Dungeon Designer Project File',
+        extensions: ['ddes']
+      }]
+    });
 
     if (canceled) {
       return
@@ -104,15 +143,74 @@ async function saveProject(mainWindow) {
     else {
       projectFilePath = filePath;
     }
-  }
 
-  mainWindow.webContents.send('save-project', projectFilePath);
+    mainWindow.webContents.send('save-project', projectFilePath);
+  }
+}
+
+async function handleOpenProjectFromLanding() {
+  landingWindow.blur();
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    filters: [{
+      name: 'Dungeon Designer Project File',
+      extensions: ['ddes']
+    }]
+  });
+
+  if (canceled) {
+    landingWindow.focus();
+    return;
+  }
+  else {
+    projectFilePath = filePaths[0];
+
+    const fs = require('fs');
+
+    fs.readFile(projectFilePath, 'utf-8', function (err, projectDataString) {
+      if (err) {
+        console.error(err);
+      }
+      else {
+        landingWindow.show = false;
+        mainWindow.show();
+        mainWindow.webContents.send('load-project', JSON.parse(projectDataString));
+        landingWindow.close();
+      }
+    });
+  }
+}
+
+async function handleOpenProject(mainWindow) {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    filters: [{
+      name: 'Dungeon Designer Project File',
+      extensions: ['ddes']
+    }]
+  });
+
+  if (canceled) {
+    return;
+  }
+  else {
+    projectFilePath = filePaths[0];
+
+    const fs = require('fs');
+
+    fs.readFile(projectFilePath, 'utf-8', function (err, projectDataString) {
+      if (err) {
+        console.error(err);
+      }
+      else {
+        mainWindow.webContents.send('load-project', JSON.parse(projectDataString));
+      }
+    });
+  }
 }
 
 async function saveProjectFile(payload) {
   const fs = require('fs');
-  
-  fs.writeFile(projectFilePath, payload, err => {
+
+  fs.writeFile(projectFilePath, JSON.stringify(payload), err => {
     if (err) {
       console.error(err);
     }

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <!-- CSS only -->
+  <link href="./styles.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>Dungeon Designer</title>
+</head>
+
+<body>
+  <div class="card">
+    <header>
+      <img src="./Assets/dungeondesignerlogo.png" />
+    </header>
+    <div class="card_body">
+      <div class="flex-container landing-menu">
+        <div>
+          <button id="new-project-button" title="New Project" type="button" id="open-file-button"
+            class="primary-button landing-button"><img src="./Assets/dagger.png" width="60px" />
+        </div>
+        <div>
+          <button id="load-project-button" title="Load Project" type="button" id="open-file-button"
+            class="secondary-button landing-button"><img src="./Assets/bow.png" width="60px" /></button>
+        </div>
+        <div>
+          <button id="quit-button" title="Quit" type="button" id="open-file-button"
+            class="exit-button landing-button"><img src="./Assets/skull.png" width="60px" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- You can also require other files to run in this process -->
+  <script src="./landing.js"></script>
+</body>
+
+</html>

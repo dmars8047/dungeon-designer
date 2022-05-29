@@ -1,14 +1,9 @@
-* {
-   /* box-sizing: border-box; */
-}
-
 .flex-container {
    display: flex;
 }
 
 .flex-container>div {
-   margin-left: 8px;
-   margin-top: 8px;
+   padding: 10px;
 }
 
 .flex-container>div>label {
@@ -57,7 +52,7 @@ body {
 }
 
 .tile-canvas {
-   padding:3px;
+   padding: 3px;
 }
 
 .tile-canvas:hover {
@@ -94,18 +89,6 @@ body {
    height: 32px;
 }
 
-.primary-button {
-   border: 0;
-   background: #4e84fa;
-   border-top: 4px solid transparent;
-   border-bottom: 4px solid #3166c7;
-   color: #fff;
-   border-radius: 6px;
-   outline: 0;
-   padding: 6px 16px;
-   cursor: pointer;
-}
-
 select {
    border: 0;
    outline: 0;
@@ -116,6 +99,22 @@ select {
    border-radius: 6px;
 }
 
+.primary-button {
+   border: 0;
+   background: #4e84fa;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid #3166c7;
+   color: #fff;
+   border-radius: 6px;
+   outline: 0;
+   cursor: pointer;
+}
+
+.primary-button:hover {
+   background: #6092fd;
+   transform: scale(1.1);
+}
+
 .secondary-button {
    border: 0;
    background: #f9d339;
@@ -124,8 +123,37 @@ select {
    color: #111;
    border-radius: 6px;
    outline: 0;
-   padding: 6px 16px;
    cursor: pointer;
+}
+
+.secondary-button:hover {
+   background: #fad644;
+   transform: scale(1.1);
+}
+
+.exit-button {
+   border: 0;
+   background: #d43c3c;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid #b43434;
+   color: #111;
+   border-radius: 6px;
+   outline: 0;
+   cursor: pointer;
+}
+
+.exit-button:hover {
+   background: #d44a4a;
+   transform: scale(1.1);
+}
+
+.landing-button {
+   width: 100px;
+   height: 100px;
+}
+
+.landing-menu {
+   margin: auto;
 }
 
 label {
