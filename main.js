@@ -5,8 +5,8 @@ const path = require('path')
 const isMac = process.platform === 'darwin'
 let landingWindow;
 let mainWindow;
-
 let projectFilePath = '';
+let projectInitialized = false;
 
 function createLandingWindow() {
   landingWindow = new BrowserWindow({
@@ -20,7 +20,14 @@ function createLandingWindow() {
     }
   });
 
-  landingWindow.loadFile('landing.html')
+  landingWindow.loadFile('landing.html');
+
+  landingWindow.on('close', function () {
+    if (!projectInitialized) {
+      app.quit();
+    }
+  });
+
   // landingWindow.webContents.openDevTools()
 }
 
@@ -76,7 +83,7 @@ function createMainWindow() {
   mainWindow.loadFile('main.html')
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -85,28 +92,47 @@ function createMainWindow() {
 app.whenReady().then(() => {
   ipcMain.handle('dialog:openFile', handleFileOpen);
   ipcMain.handle('project:openProject', handleOpenProjectFromLanding);
-  ipcMain.handle('project:newProject', handleNewProject);
   ipcMain.handle('app:quit', handleAppQuit);
-  ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); })
+  ipcMain.handle('project:projectCreationWindowEntered', handleNewProjectCreationScreenEntered);
+  ipcMain.handle('project:projectCreationWindowExited', handleNewProjectCreationScreenExited);
+  ipcMain.on('project:newProject', (_event, value) => { handleNewProject(value); });
+  ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); });
   createMainWindow();
   createLandingWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
-})
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
 
-async function handleNewProject() {
+async function handleNewProject(newProjectData) {
+  if (newProjectData) {
 
+  }
+}
+
+
+async function handleNewProjectCreationScreenEntered() {
+  landingWindow.setSize(800, 600);
+  landingWindow.center();
+}
+
+async function handleNewProjectCreationScreenExited() {
+  landingWindow.setSize(500, 300);
+  landingWindow.center();
 }
 
 async function handleFileOpen() {
@@ -171,10 +197,16 @@ async function handleOpenProjectFromLanding() {
         console.error(err);
       }
       else {
+        projectInitialized = true;
         landingWindow.show = false;
+
         mainWindow.show();
         mainWindow.webContents.send('load-project', JSON.parse(projectDataString));
+
         landingWindow.close();
+        if (landingWindow) {
+          landingWindow.destroy();
+        }
       }
     });
   }

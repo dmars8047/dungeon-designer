@@ -18,7 +18,7 @@
       <img src="./Assets/dungeondesignerlogo.png" />
     </header>
     <div class="card_body">
-      <div class="flex-container landing-menu">
+      <div id="landing-menu" class="flex-container landing-menu">
         <div>
           <button id="new-project-button" title="New Project" type="button" id="open-file-button"
             class="primary-button landing-button"><img src="./Assets/dagger.png" width="60px" />
@@ -31,6 +31,28 @@
           <button id="quit-button" title="Quit" type="button" id="open-file-button"
             class="exit-button landing-button"><img src="./Assets/skull.png" width="60px" />
           </button>
+        </div>
+      </div>
+      <div id="new-project-menu" class="grid-container" style="display: none;">
+        <div style="grid-column: 1; grid-row: 1;">
+          <label for="projectName">Project Name:</label>
+          <input type="text" id="project-name-input" name="projectName">
+        </div>
+        <div style="grid-column: 2; grid-row: 1;">
+          <label for="tilesizes">Tile Size:</label>
+          <select name="tilesizes" id="tile-size-select">
+            <option value="16">16</option>
+            <option value="32" selected>32</option>
+            <option value="48">48</option>
+            <option value="64">64</option>
+          </select>
+        </div>
+        <div style="grid-column: 1; grid-row: 2; margin-left: auto;">
+          <button type="button" id="create-project-button"
+            class="primary-button form-button">Create&nbsp;Project</button>
+        </div>
+        <div style="grid-column: 2; grid-row: 2; margin-right: auto;">
+          <button id="cancel-create-project-button" class="secondary-button form-button">Cancel</button>
         </div>
       </div>
     </div>
