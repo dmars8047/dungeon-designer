@@ -15,6 +15,7 @@ var importTilesetButton = document.getElementById('import-tileset-button');
 var errorMessageContainer = document.getElementById('error-message-container');
 var errorMessage = document.getElementById('error-message');
 
+var layerNames = [];
 var numLayers = 2;
 
 pushLayerButton.addEventListener('click', async () => {
@@ -90,14 +91,10 @@ createNewProjectButton.addEventListener('click', async () => {
         var creationRequest = {
             projectName: projectNameInput.value,
             tilesize: tileSizeSelect.value,
-            layerNames: []
-        }
+            layerNames: layerNames
+        };
 
-        for (let i = 1; i <= numLayers; i++) {
-            creationRequest.layerNames.push(document.getElementById("layer-" + i + "-input").value);
-        }
-
-        await window.electronAPI.createProject();
+        await window.electronAPI.createProject(creationRequest);
     }
 });
 
@@ -144,7 +141,7 @@ function projectCreateFormIsValid() {
         tilesetFileInput.style.backgroundColor = '#fff';
     }
 
-    let layerNames = [];
+    layerNames = [];
 
     for (let i = 1; i <= numLayers; i++) {
         let input = document.getElementById("layer-" + i + "-input");
