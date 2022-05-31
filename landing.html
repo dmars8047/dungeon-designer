@@ -63,11 +63,11 @@
                   style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
                   <div class="grid-container">
                     <div style="grid-column: 1; grid-row: 1;">
-                      <button type="button" style="height: 40px;" class="secondary-button form-button">Import
+                      <button id="import-tileset-button" type="button" style="height: 40px;" class="secondary-button form-button">Import
                         Tileset</button>
                     </div>
                     <div style="grid-column: 2 / span 2; grid-row: 1;">
-                      <input id="tileset-input" type="text" placeholder="Tileset file path" readonly>
+                      <input id="tileset-file-input" type="text" placeholder="Tileset file path" readonly>
                     </div>
                   </div>
                   <!-- <input type="file" id="tileset-input" name="tileset" style="width:100%;"> -->
@@ -105,7 +105,9 @@
       </div>
     </div>
   </div>
-
+  <div id="error-message-container" class="alert" style="display: none">
+    <p id="error-message"></p>
+  </div>
   <!-- You can also require other files to run in this process -->
   <script src="./landing.js"></script>
 </body>

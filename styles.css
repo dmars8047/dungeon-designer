@@ -120,11 +120,11 @@ fieldset {
 
 .project-creation-panel {
    width: 90%;
-   margin:auto;
+   margin: auto;
 }
 
 .project-creation-tile-fieldset {
-   margin:auto;
+   margin: auto;
 }
 
 .form-button {
@@ -206,4 +206,15 @@ label {
    border-style: solid;
    border-color: #02fafa;
    border-radius: 1px;
+}
+
+.alert {
+   padding-left: 20px;
+   background-color: #f44336;
+   color: white;
+   border-radius: 6px;
+   height: 75px;
+   width: 90%;
+   position: absolute;
+   bottom: 10px;
 }

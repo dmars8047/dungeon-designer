@@ -10,6 +10,10 @@ var tileSizeSelect = document.getElementById('tile-size-select');
 var layerElementContainer = document.getElementById('layer-element-container');
 var pushLayerButton = document.getElementById('push-layer-button');
 var popLayerButton = document.getElementById('pop-layer-button');
+var tilesetFileInput = document.getElementById('tileset-file-input');
+var importTilesetButton = document.getElementById('import-tileset-button');
+var errorMessageContainer = document.getElementById('error-message-container');
+var errorMessage = document.getElementById('error-message');
 
 var numLayers = 2;
 
@@ -59,6 +63,14 @@ popLayerButton.addEventListener('click', async () => {
     }
 });
 
+importTilesetButton.addEventListener('click', async () => {
+    var pathToTilset = await window.electronAPI.openFile();
+    if (pathToTilset) {
+        tilesetFileInput.value = pathToTilset;
+        tilesetFileInput.style.backgroundColor = '#fff';
+    }
+});
+
 newProjectButton.addEventListener('click', async () => {
     landingMenu.style.display = 'none';
     newProjectMenu.style.display = 'grid';
@@ -71,12 +83,21 @@ cancelNewProjectButton.addEventListener('click', async () => {
     window.electronAPI.goBackFromProjectCreation();
 });
 
+// Handles when the user clicks the create button in the create project 'form'.
 createNewProjectButton.addEventListener('click', async () => {
-    if (projectNameInput.value) {
-        await window.electronAPI.createProject({ projectName: projectNameInput.value, tilesize: tileSizeSelect.value });
-    }
-    else {
-        projectNameInput.style.backgroundColor = '#ffc8c4';
+    if (projectCreateFormIsValid()) {
+
+        var creationRequest = {
+            projectName: projectNameInput.value,
+            tilesize: tileSizeSelect.value,
+            layerNames: []
+        }
+
+        for (let i = 1; i <= numLayers; i++) {
+            creationRequest.layerNames.push(document.getElementById("layer-" + i + "-input").value);
+        }
+
+        await window.electronAPI.createProject();
     }
 });
 
@@ -89,7 +110,6 @@ projectNameInput.addEventListener('keyup', async () => {
     }
 });
 
-// Import Tilset button click event
 loadProjectButton.addEventListener('click', async () => {
     await window.electronAPI.openProject();
 });
@@ -97,3 +117,73 @@ loadProjectButton.addEventListener('click', async () => {
 quitButton.addEventListener('click', async () => {
     await window.electronAPI.quitApp();
 });
+
+function projectCreateFormIsValid() {
+    let isValid = true;
+    let errorMessageText = '';
+
+    if (!projectNameInput.value) {
+        projectNameInput.style.backgroundColor = '#ffc8c4';
+        errorMessageText = 'A project name is required. The name of the project must be under 255 characters.'
+        isValid = false;
+    }
+    else {
+        projectNameInput.style.backgroundColor = '#fff';
+    }
+
+    if (!tilesetFileInput.value) {
+        tilesetFileInput.style.backgroundColor = '#ffc8c4';
+
+        if (!errorMessageText) {
+            errorMessageText = 'You must provide an initial tileset PNG file.'
+        }
+
+        isValid = false;
+    }
+    else {
+        tilesetFileInput.style.backgroundColor = '#fff';
+    }
+
+    let layerNames = [];
+
+    for (let i = 1; i <= numLayers; i++) {
+        let input = document.getElementById("layer-" + i + "-input");
+
+        if (!input.value || layerNames.indexOf(input.value) > -1) {
+            if (!errorMessageText) {
+                errorMessageText = 'Each tileset layer must have a unique name.';
+            }
+
+            input.style.backgroundColor = '#ffc8c4';
+            isValid = false;
+        }
+        else {
+            layerNames.push(input.value);
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    if (!isValid) {
+        errorMessageContainer.style.display = 'inline';
+        errorMessage.float
+        errorMessage.innerHTML = '<strong>Error:</strong>&nbsp;' + errorMessageText;
+        setTimeout(function () { fadeOutEffect(); }, 2500);
+    }
+
+    return isValid;
+}
+
+function fadeOutEffect() {
+    var fadeEffect = setInterval(function () {
+        if (!errorMessageContainer.style.opacity) {
+            errorMessageContainer.style.opacity = 1;
+        }
+        if (errorMessageContainer.style.opacity > 0) {
+            errorMessageContainer.style.opacity -= 0.1;
+        } else {
+            errorMessageContainer.style.display = 'none';
+            errorMessageContainer.style.opacity = 1;
+            clearInterval(fadeEffect);
+        }
+    }, 50);
+}
