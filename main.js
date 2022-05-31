@@ -14,6 +14,7 @@ function createLandingWindow() {
     height: 300,
     show: true,
     icon: './Assets/dungeondesignericon.png',
+    title: 'Dungeon Designer',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
@@ -28,7 +29,7 @@ function createLandingWindow() {
     }
   });
 
-  // landingWindow.webContents.openDevTools()
+  // landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
@@ -38,6 +39,7 @@ function createMainWindow() {
     height: 1080,
     show: false,
     icon: './Assets/dungeondesignericon.png',
+    title: 'Dungeon Designer',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -126,7 +128,7 @@ async function handleNewProject(newProjectData) {
 
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 600);
+  landingWindow.setSize(800, 720);
   landingWindow.center();
 }
 
@@ -176,6 +178,7 @@ async function handleSaveProject(mainWindow) {
 
 async function handleOpenProjectFromLanding() {
   landingWindow.blur();
+  landingWindow.setEnabled(false);
   const { canceled, filePaths } = await dialog.showOpenDialog({
     filters: [{
       name: 'Dungeon Designer Project File',
@@ -184,6 +187,7 @@ async function handleOpenProjectFromLanding() {
   });
 
   if (canceled) {
+    landingWindow.setEnabled(true);
     landingWindow.focus();
     return;
   }

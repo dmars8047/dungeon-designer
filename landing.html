@@ -15,7 +15,7 @@
 <body>
   <div class="card">
     <header>
-      <img src="./Assets/dungeondesignerlogo.png" />
+      <img style="margin: auto;" src="./Assets/dungeondesignerlogo.png" />
     </header>
     <div class="card_body">
       <div id="landing-menu" class="flex-container landing-menu">
@@ -33,26 +33,74 @@
           </button>
         </div>
       </div>
-      <div id="new-project-menu" class="grid-container" style="display: none;">
-        <div style="grid-column: 1; grid-row: 1;">
-          <label for="projectName">Project Name:</label>
-          <input type="text" id="project-name-input" name="projectName">
-        </div>
-        <div style="grid-column: 2; grid-row: 1;">
-          <label for="tilesizes">Tile Size:</label>
-          <select name="tilesizes" id="tile-size-select">
-            <option value="16">16</option>
-            <option value="32" selected>32</option>
-            <option value="48">48</option>
-            <option value="64">64</option>
-          </select>
-        </div>
-        <div style="grid-column: 1; grid-row: 2; margin-left: auto;">
-          <button type="button" id="create-project-button"
-            class="primary-button form-button">Create&nbsp;Project</button>
-        </div>
-        <div style="grid-column: 2; grid-row: 2; margin-right: auto;">
-          <button id="cancel-create-project-button" class="secondary-button form-button">Cancel</button>
+      <div id="new-project-menu" style="display: none; width: 100%;">
+        <div class="grid-container project-creation-panel">
+          <div style="grid-column: 1 / span 4; grid-row: 1;">
+            <fieldset>
+              <legend>Project Settings</legend>
+              <div class="grid-container">
+                <div style="grid-column: 1 / span 2; grid-row: 1;">
+                  <label for="projectName">Name:</label>
+                  <input type="text" id="project-name-input" name="projectName" placeholder="Project name...">
+                </div>
+                <div style="grid-column: 3; grid-row: 1;">
+                  <label for="tilesizes">Tile Size:</label>
+                  <select name="tilesizes" id="tile-size-select">
+                    <option value="16">16</option>
+                    <option value="32" selected>32</option>
+                    <option value="48">48</option>
+                    <option value="64">64</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div style="grid-column: 1 / span 4; grid-row: 2;">
+            <fieldset class="project-creation-tile-fieldset ">
+              <legend>Initial Map Area</legend>
+              <div class="grid-container">
+                <div
+                  style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
+                  <div class="grid-container">
+                    <div style="grid-column: 1; grid-row: 1;">
+                      <button type="button" style="height: 40px;" class="secondary-button form-button">Import
+                        Tileset</button>
+                    </div>
+                    <div style="grid-column: 2 / span 2; grid-row: 1;">
+                      <input id="tileset-input" type="text" placeholder="Tileset file path" readonly>
+                    </div>
+                  </div>
+                  <!-- <input type="file" id="tileset-input" name="tileset" style="width:100%;"> -->
+                </div>
+                <div style="grid-column: 1 / span 3; grid-row: 2;">
+                  <div class="grid-container" id="layer-element-container">
+                    <div id="layer-1-label-container" style="grid-column: 1; grid-row: 1; margin:auto;">
+                      <label for="layer-1">Tile Layer 1:</label>
+                    </div>
+                    <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
+                      <input type="text" placeholder="Background..." id="layer-1-input" name="layer-1">
+                    </div>
+                    <div id="layer-2-label-container" style="grid-column: 1; grid-row: 2; margin:auto;">
+                      <label for="layer-2">Tile Layer 2:</label>
+                    </div>
+                    <div id="layer-2-input-container" style="grid-column: 2 / span 2; grid-row: 2;">
+                      <input type="text" placeholder="Foreground..." id="layer-2-input" name="layer-2">
+                    </div>
+                  </div>
+                </div>
+                <div style="grid-column-start: 3; grid-row: 4; margin-left: 56%;">
+                  <button id="push-layer-button">&#43;</button><button id="pop-layer-button">&#8722;</button>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div style="grid-column-start: 3; grid-row: 3; margin-top: 20px;">
+            <button type="button" id="create-project-button"
+              class="primary-button form-button">Create&nbsp;Project</button>
+          </div>
+          <div style="grid-column-start: 4; grid-row: 3; margin-top: 20px;">
+            <button id="cancel-create-project-button" class="secondary-button form-button">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
