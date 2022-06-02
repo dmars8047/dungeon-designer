@@ -121,9 +121,11 @@ app.on('window-all-closed', function () {
 });
 
 async function handleNewProject(newProjectData) {
-  if (newProjectData) {
-
-  }
+  // console.log(newProjectData);
+  mainWindow.show();
+  mainWindow.webContents.send('load-new-project', newProjectData);
+  projectInitialized = true;
+  landingWindow.close();
 }
 
 

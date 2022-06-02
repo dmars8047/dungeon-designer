@@ -101,11 +101,23 @@ window.electronAPI.saveProject((event, value) => {
     event.sender.send('project:saveToFile', saveData);
 });
 
-window.electronAPI.loadProject((event, value) => {
+window.electronAPI.loadProjectFromFile((event, value) => {
     project = value;
     project.tileSize = 32;
     layers = value.sections[0].mapData;
     tileSetSourceImage.src = value.sections[0].tileset;
+});
+
+window.electronAPI.loadNewProject((event, value) => {
+    project = {};
+    project.tileSize = value.tileSize;
+    layers = [];
+    for(let i = 0; i < value.layerNames.length; i++)
+    {
+        layers.push({});
+    }
+    project.name = value.projectName;
+    tileSetSourceImage.src = value.tilesetSrc;
 });
 
 tileSetSourceImage.onload = () => {

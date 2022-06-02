@@ -90,11 +90,12 @@ createNewProjectButton.addEventListener('click', async () => {
 
         var creationRequest = {
             projectName: projectNameInput.value,
-            tilesize: tileSizeSelect.value,
-            layerNames: layerNames
+            tileSize: parseInt(tileSizeSelect.value),
+            layerNames: layerNames,
+            tilesetSrc: tilesetFileInput.value
         };
 
-        await window.electronAPI.createProject(creationRequest);
+        await window.electronAPI.createNewProject(creationRequest);
     }
 });
 
