@@ -111,6 +111,8 @@ window.electronAPI.loadProjectFromFile((event, value) => {
 window.electronAPI.loadNewProject((event, value) => {
     project = {};
     project.tileSize = value.tileSize;
+    mainCanvas.width = value.canvasWidth;
+    mainCanvas.height = value.canvasHeight;
     layers = [];
     for(let i = 0; i < value.layerNames.length; i++)
     {

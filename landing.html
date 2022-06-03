@@ -44,7 +44,7 @@
                   <input type="text" id="project-name-input" name="projectName" placeholder="Project name...">
                 </div>
                 <div style="grid-column: 3; grid-row: 1;">
-                  <label for="tilesizes">Tile Size:</label>
+                  <label for="tilesizes">Default Tile Size:</label>
                   <select name="tilesizes" id="tile-size-select">
                     <option value="16">16</option>
                     <option value="32" selected>32</option>
@@ -63,16 +63,30 @@
                   style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
                   <div class="grid-container">
                     <div style="grid-column: 1; grid-row: 1;">
-                      <button id="import-tileset-button" type="button" style="height: 40px;" class="secondary-button form-button">Import
+                      <label style="margin-top: 8px;">Map Dimensions:</label>
+                    </div>
+                    <div style="grid-column: 2; grid-row: 1;">
+                      <input type="number" placeholder="Width" id="map-dimensions-width-input">
+                    </div>
+                    <div style="grid-column: 3; grid-row: 1;">
+                      <input type="number" placeholder="Height" id="map-dimensions-height-input">
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="grid-column: 1 / span 3; grid-row: 2; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
+                  <div class="grid-container">
+                    <div style="grid-column: 1; grid-row: 1;">
+                      <button id="import-tileset-button" type="button" style="height: 40px;"
+                        class="secondary-button form-button">Import
                         Tileset</button>
                     </div>
                     <div style="grid-column: 2 / span 2; grid-row: 1;">
                       <input id="tileset-file-input" type="text" placeholder="Tileset file path" readonly>
                     </div>
                   </div>
-                  <!-- <input type="file" id="tileset-input" name="tileset" style="width:100%;"> -->
                 </div>
-                <div style="grid-column: 1 / span 3; grid-row: 2;">
+                <div style="grid-column: 1 / span 3; grid-row: 3;">
                   <div class="grid-container" id="layer-element-container">
                     <div id="layer-1-label-container" style="grid-column: 1; grid-row: 1; margin:auto;">
                       <label for="layer-1">Tile Layer 1:</label>

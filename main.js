@@ -16,6 +16,8 @@ function createLandingWindow() {
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
     autoHideMenuBar: true,
+    resizable: false,
+    maximizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -130,12 +132,14 @@ async function handleNewProject(newProjectData) {
 
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 720);
+  landingWindow.setSize(800, 800);
   landingWindow.center();
 }
 
 async function handleNewProjectCreationScreenExited() {
+  landingWindow.setResizable(true);
   landingWindow.setSize(500, 300);
+  landingWindow.setResizable(false);
   landingWindow.center();
 }
 

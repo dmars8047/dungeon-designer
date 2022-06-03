@@ -14,6 +14,8 @@ var tilesetFileInput = document.getElementById('tileset-file-input');
 var importTilesetButton = document.getElementById('import-tileset-button');
 var errorMessageContainer = document.getElementById('error-message-container');
 var errorMessage = document.getElementById('error-message');
+var mapDimensionsWidthInput = document.getElementById('map-dimensions-width-input');
+var mapDimensionsHeightInput = document.getElementById('map-dimensions-height-input');
 
 var layerNames = [];
 var numLayers = 2;
@@ -80,6 +82,7 @@ newProjectButton.addEventListener('click', async () => {
 
 cancelNewProjectButton.addEventListener('click', async () => {
     newProjectMenu.style.display = 'none';
+    errorMessageContainer.style.display = 'none';
     landingMenu.style.display = 'flex';
     window.electronAPI.goBackFromProjectCreation();
 });
@@ -92,7 +95,9 @@ createNewProjectButton.addEventListener('click', async () => {
             projectName: projectNameInput.value,
             tileSize: parseInt(tileSizeSelect.value),
             layerNames: layerNames,
-            tilesetSrc: tilesetFileInput.value
+            tilesetSrc: tilesetFileInput.value,
+            canvasWidth: mapDimensionsWidthInput.value,
+            canvasHeight: mapDimensionsHeightInput.value
         };
 
         await window.electronAPI.createNewProject(creationRequest);
@@ -127,6 +132,23 @@ function projectCreateFormIsValid() {
     }
     else {
         projectNameInput.style.backgroundColor = '#fff';
+    }
+
+    if (!mapDimensionsWidthInput.value ||
+        mapDimensionsWidthInput.value < 1 ||
+        !mapDimensionsHeightInput.value ||
+        mapDimensionsHeightInput.value < 1) {
+
+        mapDimensionsHeightInput.style.backgroundColor = '#ffc8c4';
+        mapDimensionsWidthInput.style.backgroundColor = '#ffc8c4';
+
+        if (!errorMessageText) {
+            errorMessageText = 'You must provide a width and height for first map. The values must be positive numbers.';
+        }
+    }
+    else {
+        mapDimensionsHeightInput.style.backgroundColor = '#fff';
+        mapDimensionsWidthInput.style.backgroundColor = '#fff';
     }
 
     if (!tilesetFileInput.value) {
