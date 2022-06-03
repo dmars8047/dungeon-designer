@@ -55,7 +55,7 @@ body {
 }
 
 .tile-canvas:hover {
-   transform: scale(1.3);
+   transform: scale(1.1);
 }
 
 .card aside {
@@ -147,7 +147,7 @@ fieldset {
 
 .primary-button:hover {
    background: #6092fd;
-   transform: scale(1.1);
+   transform: scale(1.05);
 }
 
 .secondary-button {
@@ -165,7 +165,7 @@ fieldset {
 
 .secondary-button:hover {
    background: #fad644;
-   transform: scale(1.1);
+   transform: scale(1.05);
 }
 
 .push-pop-layer-button {
@@ -193,7 +193,7 @@ fieldset {
 
 .exit-button:hover {
    background: #d44a4a;
-   transform: scale(1.1);
+   transform: scale(1.05);
 }
 
 .landing-button {
