@@ -102,8 +102,15 @@
                     </div>
                   </div>
                 </div>
-                <div style="grid-column-start: 3; grid-row: 4; margin-left: 56%;">
-                  <button id="push-layer-button">&#43;</button><button id="pop-layer-button">&#8722;</button>
+                <div style="grid-column-start: 3; grid-row: 4;">
+                  <div class="grid-container">
+                    <div style="grid-column: 1;grid-row:1;margin-left: auto;">
+                      <button class="push-pop-layer-button" id="push-layer-button">&#43;</button>
+                    </div>
+                    <div style="grid-column: 2;grid-row:1;">
+                      <button class="push-pop-layer-button" id="pop-layer-button">&#8722;</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </fieldset>
@@ -112,7 +119,7 @@
             <button type="button" id="create-project-button"
               class="primary-button form-button">Create&nbsp;Project</button>
           </div>
-          <div style="grid-column-start: 4; grid-row: 3; margin-top: 20px;">
+          <div style="grid-column: 4; grid-row: 3; margin-top: 20px;">
             <button id="cancel-create-project-button" class="secondary-button form-button">Cancel</button>
           </div>
         </div>
