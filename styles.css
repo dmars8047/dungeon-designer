@@ -58,17 +58,22 @@ body {
    transform: scale(1.1);
 }
 
-.card aside {
-   padding-left: 16px;
-   padding-right: 16px;
+.tileset-aside {
+   width: 25%;
+   max-height: 500px;
+   overflow-y: scroll;
+}
+
+.canvas-container {
+   width: 75%;
+   max-width: 75%;
+   max-height: 500px;
+   background-color: #969da8;
+   overflow: scroll;
 }
 
 .card_body {
    display: flex;
-}
-
-.card_right-column {
-   padding-right: 16px;
 }
 
 #main-canvas {
