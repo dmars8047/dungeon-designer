@@ -101,6 +101,7 @@ window.electronAPI.saveProject((event, value) => {
     event.sender.send('project:saveToFile', saveData);
 });
 
+// Event handler for when a request to load a project from a file is recieved.
 window.electronAPI.loadProjectFromFile((event, value) => {
     project = value;
     project.tileSize = 32;
