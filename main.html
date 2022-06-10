@@ -8,7 +8,7 @@
     content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
   <!-- CSS only -->
   <link href="./styles.css" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <title>Dungeon Designer</title>
 </head>
 
@@ -50,21 +50,29 @@
       </div>
     </header>
     <div class="card_body">
-      <div class="tileset-aside">
-        <label>Tiles</label>
-        <div id="tileset-container">
+      <div id="main-console-container" class="main-console">
+        <div class="tileset-aside">
+          <div class="tiles-label-container">
+            <label>Tiles</label>
+          </div>
+          <div id="tileset-container">
+          </div>
         </div>
-      </div>
+        <div class="console-partition"></div>
         <!-- The main canvas -->
         <div class="canvas-container">
-          <canvas id="main-canvas" width="1280" height="720">
-        </canvas>
+          <div class="canvas-label-container">
+            <label>Map</label>
+          </div>
+          <canvas id="main-canvas">
+          </canvas>
         </div>
-        <!-- <p class="instructions">
+      </div>
+      <!-- <p class="instructions">
           <strong>Click</strong> to paint.
           <strong>Shift+Click</strong> to remove.
         </p> -->
-        <!-- UI for layers -->
+      <!-- UI for layers -->
     </div>
   </div>
 
