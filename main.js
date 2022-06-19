@@ -87,7 +87,7 @@ function createMainWindow() {
   mainWindow.loadFile('main.html')
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -101,7 +101,7 @@ app.whenReady().then(() => {
   ipcMain.handle('project:projectCreationWindowExited', handleNewProjectCreationScreenExited);
   ipcMain.on('project:newProject', (_event, value) => { handleNewProject(value); });
   ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); });
-  createMainWindow();
+
   createLandingWindow();
 
   app.on('activate', function () {
@@ -123,13 +123,17 @@ app.on('window-all-closed', function () {
 });
 
 async function handleNewProject(newProjectData) {
-  // console.log(newProjectData);
-  mainWindow.show();
-  mainWindow.webContents.send('load-new-project', newProjectData);
+  // Initialize the main window
+  createMainWindow();
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.webContents.send('load-new-project', newProjectData);
+    mainWindow.show();
+  })
+
   projectInitialized = true;
   landingWindow.close();
 }
-
 
 async function handleNewProjectCreationScreenEntered() {
   landingWindow.setSize(800, 800);
