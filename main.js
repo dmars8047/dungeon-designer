@@ -86,8 +86,14 @@ function createMainWindow() {
   // and load the index.html of the app.
   mainWindow.loadFile('main.html')
 
+  mainWindow.on('resize', function () {
+    var size = mainWindow.getSize();
+    console.log(size);
+    mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
+  });
+
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished

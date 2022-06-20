@@ -14,6 +14,7 @@ var selectedTile = [0, 0]; //Which tile we will paint from the menu
 var importTilesetButton = document.getElementById("open-file-button");
 var tilesetContainer = document.getElementById("tileset-container");
 var layerSelect = document.getElementById("layer-select");
+let height = 1080;
 
 //
 // Function Variables
@@ -99,6 +100,11 @@ window.electronAPI.saveProject((event, value) => {
     });
 
     event.sender.send('project:saveToFile', saveData);
+});
+
+window.electronAPI.resize((event, value) => {
+    var mainContent = document.getElementById("main-content");
+    mainContent.style.height = value.windowHeight * .92 + 'px';
 });
 
 // Event handler for when a request to load a project from a file is recieved.
