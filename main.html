@@ -51,21 +51,23 @@
     </header>
     <div class="card_body">
       <div id="main-console-container" class="main-console">
-        <div class="tileset-aside">
-          <div class="tiles-label-container">
+        <div id="tileset-section" class="tileset-aside card">
+          <header id="tileset-header">
             <label>Tiles</label>
-          </div>
+          </header>
           <div id="tileset-container">
           </div>
         </div>
         <div class="console-partition"></div>
         <!-- The main canvas -->
-        <div class="canvas-container">
-          <div class="canvas-label-container">
+        <div id="canvas-section" class="canvas-container card">
+          <header id="map-header">
             <label>Map</label>
+          </header>
+          <div id="canvas-wrapper">
+            <canvas id="main-canvas">
+            </canvas>
           </div>
-          <canvas id="main-canvas">
-          </canvas>
         </div>
       </div>
       <!-- <p class="instructions">

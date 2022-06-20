@@ -88,7 +88,6 @@ function createMainWindow() {
 
   mainWindow.on('resize', function () {
     var size = mainWindow.getSize();
-    console.log(size);
     mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
   });
 
@@ -133,6 +132,8 @@ async function handleNewProject(newProjectData) {
   createMainWindow();
 
   mainWindow.once('ready-to-show', () => {
+    var size = mainWindow.getSize();
+    mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
     mainWindow.webContents.send('load-new-project', newProjectData);
     mainWindow.show();
   })

@@ -103,8 +103,26 @@ window.electronAPI.saveProject((event, value) => {
 });
 
 window.electronAPI.resize((event, value) => {
-    var mainContent = document.getElementById("main-content");
-    mainContent.style.height = value.windowHeight * .92 + 'px';
+    let mainContent = document.getElementById("main-content");
+    let canvasSection = document.getElementById("canvas-section");
+    let tilesetSection = document.getElementById("tileset-section");
+    let canvasWrapper = document.getElementById("canvas-wrapper");
+    let tilesetContainer = document.getElementById("tileset-container");
+
+    let mainContentHeight = value.windowHeight * .92;
+    let tilesetHeaderRect = document.getElementById('tileset-header').getBoundingClientRect();
+
+    mainContent.style.height = mainContentHeight + 'px';
+
+    let sectionHeights = mainContentHeight - tilesetHeaderRect.top - 10;
+
+    canvasSection.style.height = sectionHeights + 'px';
+    tilesetSection.style.height = sectionHeights + 'px';
+
+    let wrapperHeights = mainContentHeight - tilesetHeaderRect.bottom;
+
+    canvasWrapper.style.height = wrapperHeights + 'px';
+    tilesetContainer.style.height = wrapperHeights + 'px';
 });
 
 // Event handler for when a request to load a project from a file is recieved.
@@ -121,8 +139,7 @@ window.electronAPI.loadNewProject((event, value) => {
     mainCanvas.width = value.canvasWidth;
     mainCanvas.height = value.canvasHeight;
     layers = [];
-    for(let i = 0; i < value.layerNames.length; i++)
-    {
+    for (let i = 0; i < value.layerNames.length; i++) {
         layers.push({});
     }
     project.name = value.projectName;

@@ -1,3 +1,31 @@
+#main-content {
+   transition: height .4s;
+   transition: width .4s;
+}
+
+#canvas-section {
+   transition: height .4s;
+   transition: width .4s;
+}
+
+#tileset-section {
+   transition: height .4s;
+   transition: width .4s;
+}
+
+#canvas-wrapper {
+   transition: width .4s;
+   transition: height .4s;
+   overflow: auto;
+}
+
+#tileset-container {
+   transition: width .4s;
+   transition: height .4s;
+   margin-left: 15px;
+   overflow: auto;
+}
+
 .flex-container {
    display: flex;
 }
@@ -67,16 +95,22 @@ body {
 .tileset-aside {
    width: 25%;
    height: 100%;
-   overflow-y: auto;
    border: 1px solid #969da8;
    border-radius: 6px;
+}
+
+#map-header {
+   margin-bottom: 0;
+}
+
+#tileset-header {
+   margin-bottom: 0;
 }
 
 .canvas-container {
    width: 73%;
    height: 100%;
-   overflow: auto;
-   border: 1px solid #969da8;;
+   border: 1px solid #969da8;
    border-radius: 6px;
 }
 
@@ -93,10 +127,6 @@ body {
    display: block;
    margin: auto;
    background: #f4f8f9;
-}
-
-#tileset-container {
-   margin-left: 15px;
 }
 
 .tileset-container_selection {
@@ -247,20 +277,6 @@ label {
    width: 90%;
    position: absolute;
    bottom: 10px;
-}
-
-.canvas-label-container {
-   margin: auto;
-   width: 30px;
-   margin-bottom: 10px;
-   margin-top: 10px;
-}
-
-.tiles-label-container {
-   margin: auto;
-   width: 30px;
-   margin-bottom: 10px;
-   margin-top: 10px;
 }
 
 /* width */
