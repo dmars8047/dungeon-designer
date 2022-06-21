@@ -55,15 +55,15 @@
               </div>
             </fieldset>
           </div>
-          <div style="grid-column: 1 / span 4; grid-row: 2;">
+          <div id="create-project-form-section" style="grid-column: 1 / span 4; grid-row: 2;">
             <fieldset class="project-creation-tile-fieldset ">
-              <legend>Initial Map Area</legend>
+              <legend>Map Area Initialization</legend>
               <div class="grid-container">
                 <div
-                  style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
+                  style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 8px;">
                   <div class="grid-container">
-                    <div style="grid-column: 1; grid-row: 1;">
-                      <label style="margin-top: 8px;">Map Dimensions:</label>
+                    <div style="grid-column: 1; grid-row: 1; margin:auto;">
+                      <label style="margin-top: 8px;">Section Dimensions:</label>
                     </div>
                     <div style="grid-column: 2; grid-row: 1;">
                       <input type="number" placeholder="Width" id="map-dimensions-width-input">
@@ -73,42 +73,21 @@
                     </div>
                   </div>
                 </div>
-                <div
-                  style="grid-column: 1 / span 3; grid-row: 2; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 16px;">
+                <div style="grid-column: 1 / span 3; grid-row: 2;">
                   <div class="grid-container">
-                    <div style="grid-column: 1; grid-row: 1;">
+                    <div style="grid-column: 1; grid-row: 1; margin: auto;">
+                      <label for="layer-1">Tile Layer 1</label>
+                    </div>
+                    <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
+                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" name="layer-1">
+                    </div>
+                    <div style="grid-column: 1; grid-row: 2;">
                       <button id="import-tileset-button" type="button" style="height: 40px;"
                         class="secondary-button form-button">Import
                         Tileset</button>
                     </div>
-                    <div style="grid-column: 2 / span 2; grid-row: 1;">
+                    <div style="grid-column: 2 / span 2; grid-row: 2;">
                       <input id="tileset-file-input" type="text" placeholder="Tileset file path" readonly>
-                    </div>
-                  </div>
-                </div>
-                <div style="grid-column: 1 / span 3; grid-row: 3;">
-                  <div class="grid-container" id="layer-element-container">
-                    <div id="layer-1-label-container" style="grid-column: 1; grid-row: 1; margin:auto;">
-                      <label for="layer-1">Tile Layer 1:</label>
-                    </div>
-                    <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
-                      <input type="text" placeholder="Background..." id="layer-1-input" name="layer-1">
-                    </div>
-                    <div id="layer-2-label-container" style="grid-column: 1; grid-row: 2; margin:auto;">
-                      <label for="layer-2">Tile Layer 2:</label>
-                    </div>
-                    <div id="layer-2-input-container" style="grid-column: 2 / span 2; grid-row: 2;">
-                      <input type="text" placeholder="Foreground..." id="layer-2-input" name="layer-2">
-                    </div>
-                  </div>
-                </div>
-                <div style="grid-column-start: 3; grid-row: 4;">
-                  <div class="grid-container">
-                    <div style="grid-column: 1;grid-row:1;margin-left: auto;">
-                      <button class="push-pop-layer-button" id="push-layer-button">&#43;</button>
-                    </div>
-                    <div style="grid-column: 2;grid-row:1;">
-                      <button class="push-pop-layer-button" id="pop-layer-button">&#8722;</button>
                     </div>
                   </div>
                 </div>

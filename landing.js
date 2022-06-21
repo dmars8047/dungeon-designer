@@ -16,55 +16,7 @@ var errorMessageContainer = document.getElementById('error-message-container');
 var errorMessage = document.getElementById('error-message');
 var mapDimensionsWidthInput = document.getElementById('map-dimensions-width-input');
 var mapDimensionsHeightInput = document.getElementById('map-dimensions-height-input');
-
-var layerNames = [];
-var numLayers = 2;
-
-pushLayerButton.addEventListener('click', async () => {
-    numLayers++;
-    let labelContainer = document.createElement("div");
-    labelContainer.id = "layer-" + numLayers + "-label-container";
-    labelContainer.style.margin = "auto";
-    labelContainer.style.gridColumn = "1";
-    labelContainer.style.gridRow = numLayers;
-
-    let label = document.createElement("label");
-    label.id = "layer-" + numLayers + "-label";
-    label.innerHTML = "Tile Layer " + numLayers + ":";
-
-    labelContainer.appendChild(label);
-
-    let inputContainer = document.createElement("div");
-    inputContainer.id = "layer-" + numLayers + "-input-container";
-    inputContainer.style.gridColumn = "2 / span 2";
-    inputContainer.style.gridRow = numLayers;
-
-    var input = document.createElement("input");
-    input.id = "layer-" + numLayers + "-input";
-    input.type = "text";
-    input.placeholder = "Layer " + numLayers + "...";
-
-    inputContainer.appendChild(input);
-
-    layerElementContainer.appendChild(labelContainer);
-    layerElementContainer.appendChild(inputContainer);
-
-    if (numLayers > 1) {
-        popLayerButton.disabled = false;
-    }
-});
-
-popLayerButton.addEventListener('click', async () => {
-    if (numLayers > 1) {
-        document.getElementById("layer-" + numLayers + "-label-container").remove();
-        document.getElementById("layer-" + numLayers + "-input-container").remove();
-        numLayers--;
-
-        if (numLayers == 1) {
-            popLayerButton.disabled = true;
-        }
-    }
-});
+var layerNameInput = document.getElementById("layer-1-name-input");
 
 importTilesetButton.addEventListener('click', async () => {
     var pathToTilset = await window.electronAPI.openFile();
@@ -94,7 +46,7 @@ createNewProjectButton.addEventListener('click', async () => {
         var creationRequest = {
             projectName: projectNameInput.value,
             tileSize: parseInt(tileSizeSelect.value),
-            layerNames: layerNames,
+            layerName: layerNameInput.value,
             tilesetSrc: tilesetFileInput.value,
             canvasWidth: mapDimensionsWidthInput.value,
             canvasHeight: mapDimensionsHeightInput.value
@@ -164,23 +116,16 @@ function projectCreateFormIsValid() {
         tilesetFileInput.style.backgroundColor = '#fff';
     }
 
-    layerNames = [];
-
-    for (let i = 1; i <= numLayers; i++) {
-        let input = document.getElementById("layer-" + i + "-input");
-
-        if (!input.value || layerNames.indexOf(input.value) > -1) {
-            if (!errorMessageText) {
-                errorMessageText = 'Each tileset layer must have a unique name.';
-            }
-
-            input.style.backgroundColor = '#ffc8c4';
-            isValid = false;
+    if (!layerNameInput.value) {
+        if (!errorMessageText) {
+            errorMessageText = 'Each tileset layer must have a unique name.';
         }
-        else {
-            layerNames.push(input.value);
-            input.style.backgroundColor = '#fff';
-        }
+
+        layerNameInput.style.backgroundColor = '#ffc8c4';
+        isValid = false;
+    }
+    else {
+        layerNameInput.style.backgroundColor = '#fff';
     }
 
     if (!isValid) {

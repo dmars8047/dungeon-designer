@@ -2,7 +2,7 @@
 // Project Data
 //
 var project;
-var layers = [{}, {}];
+var layers = [];
 var currentLayer = 0;
 
 //
@@ -14,13 +14,13 @@ var selectedTile = [0, 0]; //Which tile we will paint from the menu
 var importTilesetButton = document.getElementById("open-file-button");
 var tilesetContainer = document.getElementById("tileset-container");
 var layerSelect = document.getElementById("layer-select");
-let height = 1080;
 
 //
 // Function Variables
 //
 var tileSetSourceImage = new Image();
 var isMouseDown = false;
+var canvasCursor = [0, 0];
 
 //
 // Event Functions
@@ -60,14 +60,20 @@ mainCanvas.addEventListener("mouseup", () => {
 
 mainCanvas.addEventListener("mouseleave", () => {
     isMouseDown = false;
+    clearPreviousCanvasCursor();
 });
 
-mainCanvas.addEventListener("mousedown", addTile);
+mainCanvas.addEventListener("mousedown", (event) => {
+    addTile(event);
+    drawCanvasCursor(event);
+});
 
 mainCanvas.addEventListener("mousemove", (event) => {
     if (isMouseDown) {
         addTile(event);
     }
+
+    drawCanvasCursor(event);
 });
 
 // Clear Canvas button click event
@@ -138,13 +144,12 @@ window.electronAPI.loadNewProject((event, value) => {
     project.tileSize = value.tileSize;
     mainCanvas.width = value.canvasWidth;
     mainCanvas.height = value.canvasHeight;
-    layers = [];
-    for (let i = 0; i < value.layerNames.length; i++) {
-        layers.push({});
-    }
+    layers = [{ src: value.tilesetSrc, name: value.layerName, index: 0, values: [] }];
     project.name = value.projectName;
     tileSetSourceImage.src = value.tilesetSrc;
+    updateLayers();
 });
+
 
 tileSetSourceImage.onload = () => {
     initTileSelector();
@@ -154,6 +159,48 @@ tileSetSourceImage.onload = () => {
 //
 // Logic Functions
 //
+
+function clearPreviousCanvasCursor() {
+    redrawCell(canvasCursor[0], canvasCursor[1]);
+    redrawCell(canvasCursor[0] + project.tileSize, canvasCursor[1]);
+    redrawCell(canvasCursor[0] - project.tileSize, canvasCursor[1]);
+    redrawCell(canvasCursor[0], canvasCursor[1] + project.tileSize);
+    redrawCell(canvasCursor[0], canvasCursor[1] - project.tileSize);
+    redrawCell(canvasCursor[0] - project.tileSize, canvasCursor[1] - project.tileSize);
+    redrawCell(canvasCursor[0] + project.tileSize, canvasCursor[1] - project.tileSize);
+    redrawCell(canvasCursor[0] - project.tileSize, canvasCursor[1] + project.tileSize);
+    redrawCell(canvasCursor[0] + project.tileSize, canvasCursor[1] + project.tileSize);
+}
+
+function drawCanvasCursor(event) {
+    var coords = getCoords(event);
+
+    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isMouseDown) {
+
+        clearPreviousCanvasCursor();
+
+        canvasCursor[0] = coords[0];
+        canvasCursor[1] = coords[1];
+
+        var ctx = mainCanvas.getContext("2d");
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.strokeStyle = "#02fad9"
+        ctx.rect(coords[0], coords[1], project.tileSize, project.tileSize);
+        ctx.stroke();
+    }
+}
+
+// Updates the set layer dropdown
+function updateLayers() {
+
+    for (var i = 0; i < layers.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = layers[i].index;
+        opt.innerHTML = layers[i].name;
+        layerSelect.appendChild(opt);
+    }
+}
 
 // Sets the dimensions of the main canvas
 function setMainCanvasDimensions() {
@@ -180,15 +227,16 @@ function selectTile(x, y) {
 // Handler for placing new tiles on the map
 function addTile(mouseEvent) {
     var clicked = getCoords(mouseEvent);
-    var key = clicked[0] + "-" + clicked[1];
+    var mouseX = clicked[0];
+    var mouseY = clicked[1];
 
-    if (mouseEvent.shiftKey) {
-        delete layers[currentLayer][key];
-    } else {
-        layers[currentLayer][key] = [selectedTile[0], selectedTile[1]];
+    layers[currentLayer].values = layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
+
+    if (!mouseEvent.shiftKey) {
+        layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
 
-    drawMainCanvas();
+    redrawCell(mouseX, mouseY);
 }
 
 // Utility for getting coordinates of mouse click
@@ -196,7 +244,7 @@ function getCoords(e) {
     const { x, y } = e.target.getBoundingClientRect();
     const mouseX = e.clientX - x;
     const mouseY = e.clientY - y;
-    return [Math.floor(mouseX / 32), Math.floor(mouseY / 32)];
+    return [Math.floor(mouseX / 32) * 32, Math.floor(mouseY / 32) * 32];
 }
 
 // Sets the current layer
@@ -204,30 +252,76 @@ function setLayer(newLayer) {
     currentLayer = newLayer;
 }
 
+function redrawCell(x, y) {
+    var ctx = mainCanvas.getContext("2d");
+    ctx.clearRect(x, y, project.tileSize, project.tileSize);
+
+    layers.sort(l => l.index).forEach((layer) => {
+        layer.values.sort(function (a, b) {
+            if (a.X < b.X) {
+                return -1;
+            }
+            else if (a.X > b.X) {
+                return 1;
+            }
+            else if (a.Y < b.Y) {
+                return -1;
+            }
+            else if (a.Y > b.Y) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }).filter(v => v.X === x && v.Y === y).forEach((val) => {
+            ctx.drawImage(
+                tileSetSourceImage,
+                val.TilesheetX,
+                val.TilesheetY,
+                project.tileSize,
+                project.tileSize,
+                val.X,
+                val.Y,
+                project.tileSize,
+                project.tileSize
+            );
+        });
+    });
+}
+
 // Draws the main canvas given the layers of the current section
 function drawMainCanvas() {
     var ctx = mainCanvas.getContext("2d");
     ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
-    var size_of_crop = 32;
-
-    layers.forEach((layer) => {
-        Object.keys(layer).forEach((key) => {
-            //Determine x/y position of this placement from key ("3-4" -> x=3, y=4)
-            var positionX = Number(key.split("-")[0]);
-            var positionY = Number(key.split("-")[1]);
-            var [tilesheetX, tilesheetY] = layer[key];
-
+    layers.sort(l => l.index).forEach((layer) => {
+        layer.values.sort(function (a, b) {
+            if (a.X < b.X) {
+                return -1;
+            }
+            else if (a.X > b.X) {
+                return 1;
+            }
+            else if (a.Y < b.Y) {
+                return -1;
+            }
+            else if (a.Y > b.Y) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }).forEach((val) => {
             ctx.drawImage(
                 tileSetSourceImage,
-                tilesheetX,
-                tilesheetY,
-                size_of_crop,
-                size_of_crop,
-                positionX * project.tileSize,
-                positionY * project.tileSize,
-                size_of_crop,
-                size_of_crop
+                val.TilesheetX,
+                val.TilesheetY,
+                project.tileSize,
+                project.tileSize,
+                val.X,
+                val.Y,
+                project.tileSize,
+                project.tileSize
             );
         });
     });
@@ -235,7 +329,7 @@ function drawMainCanvas() {
 
 // Reset state to empty
 function clearMainCanvas() {
-    layers = [{}, {}];
+    layers.forEach(l => l.values = []);
     drawMainCanvas();
 }
 

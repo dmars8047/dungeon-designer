@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, dialog, screen } = require('electron')
 const path = require('path')
 
 const isMac = process.platform === 'darwin'
@@ -31,14 +31,17 @@ function createLandingWindow() {
     }
   });
 
-  // landingWindow.webContents.openDevTools();
+  landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
+
+  const primaryDisplay = screen.getPrimaryDisplay()
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1920,
-    height: 1080,
+    width: primaryDisplay.size.width * .8,
+    height: primaryDisplay.size.height * .8,
     show: false,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
@@ -143,7 +146,7 @@ async function handleNewProject(newProjectData) {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 800);
+  landingWindow.setSize(800, 670);
   landingWindow.center();
 }
 
