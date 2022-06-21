@@ -40,15 +40,16 @@ function createMainWindow() {
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: primaryDisplay.size.width * .8,
-    height: primaryDisplay.size.height * .8,
+    width: primaryDisplay.size.width * .85,
+    height: primaryDisplay.size.height * .85,
+    resizable: true,
     show: false,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
-  })
+  });
 
   const template = [
     ...(isMac ? [{
@@ -89,8 +90,10 @@ function createMainWindow() {
   // and load the index.html of the app.
   mainWindow.loadFile('main.html')
 
-  mainWindow.on('resize', function () {
+  mainWindow.on('resize', function (e) {
+    e.preventDefault();
     var size = mainWindow.getSize();
+    console.log(size);
     mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
   });
 
@@ -136,8 +139,9 @@ async function handleNewProject(newProjectData) {
 
   mainWindow.once('ready-to-show', () => {
     var size = mainWindow.getSize();
-    mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
+    console.log(size);
     mainWindow.webContents.send('load-new-project', newProjectData);
+    mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
     mainWindow.show();
   })
 

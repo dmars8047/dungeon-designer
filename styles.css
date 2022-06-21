@@ -5,7 +5,8 @@ html {
 body {
    font-family: 'Space Mono', monospace;
    padding: 1em;
-   background: linear-gradient(180deg, #575655 0%, #30302f 100%);
+   background-color: #575655;
+   /* background: linear-gradient(180deg, #575655 0%, #30302f 100%); */
    display: flex;
    justify-content: space-around;
    color: #f9d339;
@@ -102,14 +103,12 @@ div {
 }
 
 .main-console {
-   height: 800px;
    display: flex;
    padding: 20px;
 }
 
 .tileset-aside {
    width: 25%;
-   height: 100%;
    border: 1px solid #969da8;
    border-radius: 6px;
 }
