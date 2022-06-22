@@ -31,7 +31,7 @@ function createLandingWindow() {
     }
   });
 
-  landingWindow.webContents.openDevTools();
+  // landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
@@ -40,8 +40,8 @@ function createMainWindow() {
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: primaryDisplay.size.width * .85,
-    height: primaryDisplay.size.height * .85,
+    width: primaryDisplay.size.width * .9,
+    height: primaryDisplay.size.height * .9,
     resizable: true,
     show: false,
     icon: './Assets/dungeondesignericon.png',
@@ -98,7 +98,7 @@ function createMainWindow() {
   });
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -150,7 +150,7 @@ async function handleNewProject(newProjectData) {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 670);
+  landingWindow.setSize(800, 700);
   landingWindow.center();
 }
 

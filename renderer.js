@@ -115,7 +115,7 @@ window.electronAPI.resize((event, value) => {
     let canvasWrapper = document.getElementById("canvas-wrapper");
     let tilesetContainer = document.getElementById("tileset-container");
 
-    let mainContentHeight = value.windowHeight * .92;
+    let mainContentHeight = value.windowHeight * .89;
     let tilesetHeaderRect = document.getElementById('tileset-header').getBoundingClientRect();
 
     mainContent.style.height = mainContentHeight + 'px';

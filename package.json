@@ -1,7 +1,7 @@
 {
-  "name": "capricious-extent-mix-hwwi3",
-  "productName": "capricious-extent-mix-hwwi3",
-  "description": "My Electron application description",
+  "name": "dungeon-designer",
+  "productName": "dungeon-designer",
+  "description": "Tile based map editor.",
   "keywords": [],
   "main": "./main.js",
   "version": "1.0.0",
