@@ -14,6 +14,8 @@ var selectedTile = [0, 0]; //Which tile we will paint from the menu
 var importTilesetButton = document.getElementById("open-file-button");
 var tilesetContainer = document.getElementById("tileset-container");
 var layerSelect = document.getElementById("layer-select");
+var tileSettingsButton = document.getElementById("btn-tile-settings");
+var mapSettingsButton = document.getElementById("btn-map-settings");
 
 //
 // Function Variables
@@ -85,6 +87,14 @@ clearCanvasButton.onclick = () => {
 tileSetSourceImage.onload = () => {
     initTileSelector();
 }
+
+tileSettingsButton.onclick = () => {
+    alert("clicked tile settings!");
+};
+
+mapSettingsButton.onclick = () => {
+    alert("clicked map settings!");
+};
 
 //
 // IPC Event Functions

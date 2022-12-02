@@ -31,7 +31,7 @@ function createLandingWindow() {
     }
   });
 
-  // landingWindow.webContents.openDevTools();
+  landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
@@ -40,9 +40,9 @@ function createMainWindow() {
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: primaryDisplay.size.width * .9,
-    height: primaryDisplay.size.height * .9,
-    resizable: true,
+    width: primaryDisplay.size.width,
+    height: primaryDisplay.size.height,
+    resizable: false,
     show: false,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
@@ -51,7 +51,7 @@ function createMainWindow() {
     }
   });
 
-  const template = [
+  const topMenuBarTemplate = [
     ...(isMac ? [{
       label: app.name,
       submenu: [
@@ -84,7 +84,7 @@ function createMainWindow() {
     }
   ]
 
-  const menu = Menu.buildFromTemplate(template);
+  const menu = Menu.buildFromTemplate(topMenuBarTemplate);
   Menu.setApplicationMenu(menu);
 
   // and load the index.html of the app.
@@ -98,7 +98,7 @@ function createMainWindow() {
   });
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
