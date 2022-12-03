@@ -16,36 +16,6 @@
   <div class="card" id="main-content">
     <header>
       <img src="./Assets/dungeondesignerlogo.png" />
-      <div class="flex-container">
-        <div class="flex-container">
-          <div>
-            <label for="layers">Layer:</label>
-          </div>
-          <div>
-            <select name="layers" id="layer-select">
-            </select>
-          </div>
-        </div>
-        <div class="flex-container">
-          <div>
-            <label for="tilesizes">Tile Size:</label>
-          </div>
-          <div>
-            <select name="tilesizes" id="tile-size-select">
-              <option value="16">16</option>
-              <option value="32" selected>32</option>
-              <option value="48">48</option>
-              <option value="64">64</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <button type="button" id="open-file-button" class="primary-button">Import&nbsp;Tileset</button>
-        </div>
-        <div>
-          <button id="clear-canvas-button" class="secondary-button">Clear&nbsp;Canvas</button>
-        </div>
-      </div>
     </header>
     <div class="card_body">
       <div id="main-console-container" class="main-console">
@@ -53,7 +23,7 @@
           <header id="tileset-header">
             <label>Tiles</label>
             <button id="btn-tile-settings" class="secondary-button">
-              <img src="./Assets/hamburger_black.png" width="16px" />
+              <img src="./Assets/hamburger_black.png" width="18px" />
             </button>
           </header>
           <div id="tileset-container">
@@ -64,9 +34,15 @@
         <div id="canvas-section" class="canvas-container card">
           <header id="map-header">
             <label>Map</label>
-            <button id="btn-map-settings" class="secondary-button">
-              <img src="./Assets/hamburger_black.png" width="16px" />
-            </button>
+            <div>
+              <button id="clear-canvas-button" class="secondary-button">Clear&nbsp;Canvas</button>
+              <button id="bt-eraser" class="secondary-button">
+                <img src="./Assets/Eraser.png" width="18px" />
+              </button>
+              <button id="btn-map-settings" class="secondary-button">
+                <img src="./Assets/hamburger_black.png" width="18px" />
+              </button>
+            </div>
           </header>
           <div id="canvas-wrapper">
             <canvas id="main-canvas">
@@ -81,12 +57,39 @@
     <!-- Modal content -->
     <div class="modal-content">
       <button id="close-tile-settings-corner-button" class="secondary-button close">&times;</button>
+      <div class="flex-container">
+        <div class="settings-label-container">
+          <label for="tilesizes">Tile Size:</label>
+        </div>
+        <div class="settings-form-input-container">
+          <select name="tilesizes" id="tile-size-select">
+            <option value="16">16</option>
+            <option value="32" selected>32</option>
+            <option value="48">48</option>
+            <option value="64">64</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex-container">
+        <div>
+          <button type="button" id="open-file-button" class="primary-button">Import&nbsp;Tileset</button>
+        </div>
+      </div>
     </div>
   </div>
   <div id="map-settings-modal" class="modal">
     <!-- Modal content -->
     <div class="modal-content">
       <button id="close-map-settings-corner-button" class="secondary-button close">&times;</button>
+      <div class="flex-container">
+        <div class="settings-label-container">
+          <label for="layers">Layer:</label>
+        </div>
+        <div class="settings-form-input-container">
+          <select name="layers" id="layer-select">
+          </select>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -54,18 +54,6 @@ div {
    display: flex;
 }
 
-.flex-container>div {
-   padding: 10px;
-}
-
-.flex-container>div>label {
-   margin: auto;
-}
-
-.flex-container>div>select {
-   margin: auto;
-}
-
 .grid-container {
    display: grid;
    width: 100%;
@@ -303,6 +291,10 @@ fieldset {
    margin: auto;
 }
 
+.landing-menu > div {
+   padding: 10px;
+}
+
 label {
    text-transform: uppercase;
    font-weight: bold;
@@ -322,6 +314,16 @@ label {
    width: 90%;
    position: absolute;
    bottom: 10px;
+}
+
+.settings-label-container {
+   width: 25%;
+   margin: auto;
+}
+
+.settings-form-input-container {
+   width: 40%;
+   margin: auto;
 }
 
 /* width */
