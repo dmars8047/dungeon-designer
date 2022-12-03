@@ -30,8 +30,6 @@ function createLandingWindow() {
       app.quit();
     }
   });
-
-  landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {

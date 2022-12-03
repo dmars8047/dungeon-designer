@@ -21,6 +21,7 @@ var tileSettingsModal = document.getElementById("tile-settings-modal");
 var mapSettingsModal = document.getElementById("map-settings-modal");
 var closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
 var closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
+var eraserToolButton = document.getElementById("eraser-tool-btn");
 
 //
 // Function Variables
@@ -28,6 +29,9 @@ var closeMapSettingsCornerButton = document.getElementById("close-map-settings-c
 var tileSetSourceImage = new Image();
 var isMouseDown = false;
 var canvasCursor = [0, 0];
+var eraserMode = false;
+var canvasCursorColor = "#30ff5d";
+var cursorPosition = [0, 0];
 
 //
 // Event Functions
@@ -39,6 +43,39 @@ document.onload = () => {
         drawMainCanvas();
     }
 };
+
+window.onkeydown = (event) => {
+    console.log(event);
+
+    switch (event.key) {
+        case 'e':
+            toggleEraserMode();
+            drawCanvasCursor(cursorPosition, true);
+            break;
+        case 't':
+            toggleMapSettingsModal(false);
+            toggleTileSettingsModal(true);
+            break;
+        case 'm':
+            toggleTileSettingsModal(false);
+            toggleMapSettingsModal(true);
+            break;
+        case 'Escape':
+            toggleTileSettingsModal(false);
+            toggleMapSettingsModal(false);
+            break;
+    }
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+    if (event.target == tileSettingsModal) {
+        toggleTileSettingsModal(false);
+    }
+    else if (event.target == mapSettingsModal) {
+        toggleMapSettingsModal(false);
+    }
+}
 
 // Import Tilset button click event
 importTilesetButton.addEventListener('click', async () => {
@@ -57,12 +94,10 @@ layerSelect.onchange = (event) => {
 };
 
 //Bind mouse events for painting (or removing) tiles on click/drag
-mainCanvas.addEventListener("mousedown", () => {
-    isMouseDown = true;
-});
-
-mainCanvas.addEventListener("mouseup", () => {
-    isMouseDown = false;
+mainCanvas.addEventListener("mouseup", (event) => {
+    if (event.button === 0) {
+        isMouseDown = false;
+    }
 });
 
 mainCanvas.addEventListener("mouseleave", () => {
@@ -71,8 +106,11 @@ mainCanvas.addEventListener("mouseleave", () => {
 });
 
 mainCanvas.addEventListener("mousedown", (event) => {
-    addTile(event);
-    drawCanvasCursor(event);
+    if (event.button === 0) {
+        isMouseDown = true;
+        addTile(event);
+        drawCanvasCursor(getMouseCoordinates(event));
+    }
 });
 
 mainCanvas.addEventListener("mousemove", (event) => {
@@ -80,7 +118,7 @@ mainCanvas.addEventListener("mousemove", (event) => {
         addTile(event);
     }
 
-    drawCanvasCursor(event);
+    drawCanvasCursor(getMouseCoordinates(event));
 });
 
 // Clear Canvas button click event
@@ -93,32 +131,54 @@ tileSetSourceImage.onload = () => {
     initTileSelector();
 }
 
-tileSettingsButton.onclick = () => {
-    tileSettingsModal.style.display = "block";
+eraserToolButton.onclick = () => {
+    toggleEraserMode();
 };
 
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function (event) {
-    console.log(event.target);
-    if (event.target == tileSettingsModal) {
-        tileSettingsModal.style.display = "none";
+function toggleEraserMode() {
+    eraserMode = !eraserMode;
+
+    if (eraserMode) {
+        eraserToolButton.style.background = "#f39646";
+        canvasCursorColor = "#f44336";
     }
-    else if (event.target == mapSettingsModal) {
-        mapSettingsModal.style.display = "none";
+    else {
+        eraserToolButton.style.background = "#f9d339";
+        canvasCursorColor = "#30ff5d";
     }
 }
 
-mapSettingsButton.onclick = () => {
-    mapSettingsModal.style.display = "block";
+// Tile Settings Modal
+tileSettingsButton.onclick = () => {
+    toggleTileSettingsModal(true);
 };
 
 closeTileSettingsCornerButton.onclick = () => {
-    tileSettingsModal.style.display = "none";
+    toggleTileSettingsModal(false);
+};
+
+function toggleTileSettingsModal(toggleMode) {
+    if (toggleMode)
+        tileSettingsModal.style.display = "block";
+    else
+        tileSettingsModal.style.display = "none";
+}
+
+// Map Settings Modal
+mapSettingsButton.onclick = () => {
+    toggleMapSettingsModal(true);
 };
 
 closeMapSettingsCornerButton.onclick = () => {
-    mapSettingsModal.style.display = "none";
+    toggleMapSettingsModal(false);
 };
+
+function toggleMapSettingsModal(toggleMode) {
+    if (toggleMode)
+        mapSettingsModal.style.display = "block";
+    else
+        mapSettingsModal.style.display = "none";
+}
 
 //
 // IPC Event Functions
@@ -205,20 +265,20 @@ function clearPreviousCanvasCursor() {
     redrawCell(canvasCursor[0] + project.tileSize, canvasCursor[1] + project.tileSize);
 }
 
-function drawCanvasCursor(event) {
-    var coords = getCoords(event);
+function drawCanvasCursor(coords, forceUpdate = false) {
 
-    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isMouseDown) {
+    // Dont update if the mouse is in the same position
+    // Unless the user is drawing tiles to the canvas so the tile doesnt overwrite the cursor
+    // Or the update needs to be forced
+    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isMouseDown || forceUpdate) {
 
         clearPreviousCanvasCursor();
-
         canvasCursor[0] = coords[0];
         canvasCursor[1] = coords[1];
-
         var ctx = mainCanvas.getContext("2d");
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.strokeStyle = "#02fad9"
+        ctx.strokeStyle = canvasCursorColor;
         ctx.rect(coords[0], coords[1], project.tileSize, project.tileSize);
         ctx.stroke();
     }
@@ -259,13 +319,13 @@ function selectTile(x, y) {
 
 // Handler for placing new tiles on the map
 function addTile(mouseEvent) {
-    var clicked = getCoords(mouseEvent);
+    var clicked = getMouseCoordinates(mouseEvent);
     var mouseX = clicked[0];
     var mouseY = clicked[1];
 
     layers[currentLayer].values = layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
-    if (!mouseEvent.shiftKey) {
+    if (!eraserMode) {
         layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
 
@@ -273,11 +333,12 @@ function addTile(mouseEvent) {
 }
 
 // Utility for getting coordinates of mouse click
-function getCoords(e) {
+function getMouseCoordinates(e) {
     const { x, y } = e.target.getBoundingClientRect();
     const mouseX = e.clientX - x;
     const mouseY = e.clientY - y;
-    return [Math.floor(mouseX / 32) * 32, Math.floor(mouseY / 32) * 32];
+    cursorPosition = [Math.floor(mouseX / 32) * 32, Math.floor(mouseY / 32) * 32]
+    return cursorPosition;
 }
 
 // Sets the current layer

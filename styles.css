@@ -122,6 +122,7 @@ div {
 
 /* Modal Content */
 .modal-content {
+   position: relative;
    height: 800px;
    background-color: #333;
    margin: auto;
@@ -132,13 +133,13 @@ div {
 
 /* The Close Button */
 .close {
-   float: right;
-   font-size: 24px;
-   font-weight: bold;
+   position: absolute;
+   top: 12px;
+   right: 12px;
 }
 
 .tileset-aside {
-   width: 25%;
+   width: 18%;
    border: 1px solid #969da8;
    border-radius: 6px;
 }
@@ -148,7 +149,24 @@ div {
 }
 
 #tileset-header {
+   display: flex;
    margin-bottom: 0;
+}
+
+.tile-header-title {
+   text-align: center;
+   width: 34%;
+   font-size: 20px;
+}
+
+.tile-header-spacer {
+   width: 33%;
+}
+
+.tile-tool-container {
+   display: flex;
+   justify-content: right;
+   width: 33%;
 }
 
 .canvas-container {
@@ -163,7 +181,7 @@ div {
 }
 
 .console-partition {
-   width: 2%;
+   width: 1%;
    height: 100%;
 }
 
@@ -264,6 +282,26 @@ fieldset {
    transform: scale(1.1);
 }
 
+.map-tool-container {
+   display: flex;
+   width: 33%;
+   justify-content: right;
+}
+
+.map-tool-container > button {
+   margin-left: 8px;
+}
+
+.map-header-title {
+   font-size: 20px;
+   width: 34%;
+   text-align: center;
+}
+
+.map-header-spacer {
+   width: 33%;
+}
+
 .exit-button {
    font-weight: bold;
    font-family: 'Space Mono', monospace;
@@ -291,7 +329,7 @@ fieldset {
    margin: auto;
 }
 
-.landing-menu > div {
+.landing-menu>div {
    padding: 10px;
 }
 
@@ -324,6 +362,14 @@ label {
 .settings-form-input-container {
    width: 40%;
    margin: auto;
+}
+
+.modal-header {
+   text-align: center;
+}
+
+.modal-header > h1 {
+   text-decoration: underline;
 }
 
 /* width */

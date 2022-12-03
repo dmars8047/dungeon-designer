@@ -21,10 +21,16 @@
       <div id="main-console-container" class="main-console">
         <div id="tileset-section" class="tileset-aside card">
           <header id="tileset-header">
-            <label>Tiles</label>
-            <button id="btn-tile-settings" class="secondary-button">
-              <img src="./Assets/hamburger_black.png" width="18px" />
-            </button>
+            <div class="tile-header-spacer">
+            </div>
+            <div class="tile-header-title">
+              <label>Tiles</label>
+            </div>
+            <div class="tile-tool-container">
+              <button id="btn-tile-settings" class="secondary-button">
+                <img src="./Assets/hamburger_black.png" width="18px" />
+              </button>
+            </div>
           </header>
           <div id="tileset-container">
           </div>
@@ -33,12 +39,16 @@
         <!-- The main canvas -->
         <div id="canvas-section" class="canvas-container card">
           <header id="map-header">
-            <label>Map</label>
-            <div>
-              <button id="clear-canvas-button" class="secondary-button">Clear&nbsp;Canvas</button>
-              <button id="bt-eraser" class="secondary-button">
+            <div class="map-header-spacer">
+            </div>
+            <div class="map-header-title">
+              <label>Map</label>
+            </div>
+            <div class="map-tool-container">
+              <button id="eraser-tool-btn" class="secondary-button">
                 <img src="./Assets/Eraser.png" width="18px" />
               </button>
+              <button id="clear-canvas-button" class="secondary-button">Clear</button>
               <button id="btn-map-settings" class="secondary-button">
                 <img src="./Assets/hamburger_black.png" width="18px" />
               </button>
@@ -56,8 +66,14 @@
   <div id="tile-settings-modal" class="modal">
     <!-- Modal content -->
     <div class="modal-content">
-      <button id="close-tile-settings-corner-button" class="secondary-button close">&times;</button>
+      <div class="modal-header">
+        <h1>Tile&nbsp;Settings</h1>
+      </div>
+      <button id="close-tile-settings-corner-button" class="secondary-button close">
+        <img src="./Assets/close.png" width="18px" />
+      </button>
       <div class="flex-container">
+        <div></div>
         <div class="settings-label-container">
           <label for="tilesizes">Tile Size:</label>
         </div>
@@ -80,7 +96,12 @@
   <div id="map-settings-modal" class="modal">
     <!-- Modal content -->
     <div class="modal-content">
-      <button id="close-map-settings-corner-button" class="secondary-button close">&times;</button>
+      <div class="modal-header">
+        <h1>Map&nbsp;Settings</h1>
+      </div>
+      <button id="close-map-settings-corner-button" class="secondary-button close">
+        <img src="./Assets/close.png" width="18px" />
+      </button>
       <div class="flex-container">
         <div class="settings-label-container">
           <label for="layers">Layer:</label>
