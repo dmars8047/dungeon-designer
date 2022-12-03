@@ -8,6 +8,7 @@ var currentLayer = 0;
 //
 // HTML Elements
 //
+var mainContent = document.getElementById("main-content");
 var mainCanvas = document.getElementById("main-canvas");
 var clearCanvasButton = document.getElementById("clear-canvas-button");
 var selectedTile = [0, 0]; //Which tile we will paint from the menu
@@ -16,6 +17,10 @@ var tilesetContainer = document.getElementById("tileset-container");
 var layerSelect = document.getElementById("layer-select");
 var tileSettingsButton = document.getElementById("btn-tile-settings");
 var mapSettingsButton = document.getElementById("btn-map-settings");
+var tileSettingsModal = document.getElementById("tile-settings-modal");
+var mapSettingsModal = document.getElementById("map-settings-modal");
+var closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
+var closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
 
 //
 // Function Variables
@@ -89,11 +94,30 @@ tileSetSourceImage.onload = () => {
 }
 
 tileSettingsButton.onclick = () => {
-    alert("clicked tile settings!");
+    tileSettingsModal.style.display = "block";
 };
 
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+    console.log(event.target);
+    if (event.target == tileSettingsModal) {
+        tileSettingsModal.style.display = "none";
+    }
+    else if (event.target == mapSettingsModal) {
+        mapSettingsModal.style.display = "none";
+    }
+}
+
 mapSettingsButton.onclick = () => {
-    alert("clicked map settings!");
+    mapSettingsModal.style.display = "block";
+};
+
+closeTileSettingsCornerButton.onclick = () => {
+    tileSettingsModal.style.display = "none";
+};
+
+closeMapSettingsCornerButton.onclick = () => {
+    mapSettingsModal.style.display = "none";
 };
 
 //
@@ -119,7 +143,6 @@ window.electronAPI.saveProject((event, value) => {
 });
 
 window.electronAPI.resize((event, value) => {
-    let mainContent = document.getElementById("main-content");
     let canvasSection = document.getElementById("canvas-section");
     let tilesetSection = document.getElementById("tileset-section");
     let canvasWrapper = document.getElementById("canvas-wrapper");
