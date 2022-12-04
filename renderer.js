@@ -1,37 +1,36 @@
 //
 // Project Data
 //
-var project;
-var layers = [];
-var currentLayer = 0;
+let project;
+let currentLayer = 0;
 
 //
 // HTML Elements
 //
-var mainContent = document.getElementById("main-content");
-var mainCanvas = document.getElementById("main-canvas");
-var clearCanvasButton = document.getElementById("clear-canvas-button");
-var selectedTile = [0, 0]; //Which tile we will paint from the menu
-var importTilesetButton = document.getElementById("open-file-button");
-var tilesetContainer = document.getElementById("tileset-container");
-var layerSelect = document.getElementById("layer-select");
-var tileSettingsButton = document.getElementById("btn-tile-settings");
-var mapSettingsButton = document.getElementById("btn-map-settings");
-var tileSettingsModal = document.getElementById("tile-settings-modal");
-var mapSettingsModal = document.getElementById("map-settings-modal");
-var closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
-var closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
-var eraserToolButton = document.getElementById("eraser-tool-btn");
+let mainContent = document.getElementById("main-content");
+let mainCanvas = document.getElementById("main-canvas");
+let clearCanvasButton = document.getElementById("clear-canvas-button");
+let selectedTile = [0, 0]; //Which tile we will paint from the menu
+let importTilesetButton = document.getElementById("open-file-button");
+let tilesetContainer = document.getElementById("tileset-container");
+let layerSelect = document.getElementById("layer-select");
+let tileSettingsButton = document.getElementById("btn-tile-settings");
+let mapSettingsButton = document.getElementById("btn-map-settings");
+let tileSettingsModal = document.getElementById("tile-settings-modal");
+let mapSettingsModal = document.getElementById("map-settings-modal");
+let closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
+let closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
+let eraserToolButton = document.getElementById("eraser-tool-btn");
 
 //
 // Function Variables
 //
-var tileSetSourceImage = new Image();
-var isMouseDown = false;
-var canvasCursor = [0, 0];
-var eraserMode = false;
-var canvasCursorColor = "#30ff5d";
-var cursorPosition = [0, 0];
+let tileSetSourceImage = new Image();
+let isMouseDown = false;
+let canvasCursor = [0, 0];
+let eraserMode = false;
+let canvasCursorColor = "#30ff5d";
+let cursorPosition = [0, 0];
 
 //
 // Event Functions
@@ -186,65 +185,38 @@ function toggleMapSettingsModal(toggleMode) {
 
 // Sends all information about the project so it can be saved
 window.electronAPI.saveProject((event, value) => {
-    var saveData = {
-        projectName: projectName,
-        tileSize: tileSize,
-        sections: []
-    };
-
-    saveData.sections.push({
-        canvasWidth: canvasWidth,
-        canvasHeight: canvasHeight,
-        tileset: tileSetSourceImage.src,
-        mapData: layers
-    });
-
-    event.sender.send('project:saveToFile', saveData);
-});
-
-window.electronAPI.resize((event, value) => {
-    let canvasSection = document.getElementById("canvas-section");
-    let tilesetSection = document.getElementById("tileset-section");
-    let canvasWrapper = document.getElementById("canvas-wrapper");
-    let tilesetContainer = document.getElementById("tileset-container");
-
-    let mainContentHeight = value.windowHeight * .89;
-    let tilesetHeaderRect = document.getElementById('tileset-header').getBoundingClientRect();
-
-    mainContent.style.height = mainContentHeight + 'px';
-
-    let sectionHeights = mainContentHeight - tilesetHeaderRect.top - 10;
-
-    canvasSection.style.height = sectionHeights + 'px';
-    tilesetSection.style.height = sectionHeights + 'px';
-
-    let wrapperHeights = mainContentHeight - tilesetHeaderRect.bottom;
-
-    canvasWrapper.style.height = wrapperHeights + 'px';
-    tilesetContainer.style.height = wrapperHeights + 'px';
+    console.log("Saving project...");
+    event.sender.send('project:saveToFile', project);
 });
 
 // Event handler for when a request to load a project from a file is recieved.
 window.electronAPI.loadProjectFromFile((event, value) => {
     project = value;
-    project.tileSize = 32;
-    layers = value.sections[0].mapData;
-    tileSetSourceImage.src = value.sections[0].tileset;
+    tileSetSourceImage.src = project.tilesetImagePath;
+    setMainCanvasDimensions();
+    updateLayers();
 });
 
 window.electronAPI.loadNewProject((event, value) => {
-    project = {};
-    project.tileSize = value.tileSize;
-    mainCanvas.width = value.canvasWidth;
-    mainCanvas.height = value.canvasHeight;
-    layers = [{ src: value.tilesetSrc, name: value.layerName, index: 0, values: [] }];
-    project.name = value.projectName;
-    tileSetSourceImage.src = value.tilesetSrc;
+    console.log("Setting up new project...");
+
+    project = {
+        name: value.name,
+        tileSize: value.tileSize,
+        mapWidth: value.mapWidth,
+        mapHeight: value.mapHeight,
+        layers: [{ name: value.layerName, index: 0, values: [] }],
+        tilesetImagePath: value.tilesetImagePath
+    };
+
+    tileSetSourceImage.src = project.tilesetImagePath;
+    setMainCanvasDimensions();
     updateLayers();
 });
 
 
 tileSetSourceImage.onload = () => {
+    console.log("Tileset image loaded");
     initTileSelector();
     drawMainCanvas();
 };
@@ -287,18 +259,18 @@ function drawCanvasCursor(coords, forceUpdate = false) {
 // Updates the set layer dropdown
 function updateLayers() {
 
-    for (var i = 0; i < layers.length; i++) {
+    for (var i = 0; i < project.layers.length; i++) {
         var opt = document.createElement('option');
-        opt.value = layers[i].index;
-        opt.innerHTML = layers[i].name;
+        opt.value = project.layers[i].index;
+        opt.innerHTML = project.layers[i].name;
         layerSelect.appendChild(opt);
     }
 }
 
 // Sets the dimensions of the main canvas
 function setMainCanvasDimensions() {
-    mainCanvas.width = project.canvasWidth;
-    mainCanvas.height = project.canvasHeight;
+    mainCanvas.width = project.mapWidth;
+    mainCanvas.height = project.mapHeight;
 }
 
 // Sets the selected tileset
@@ -323,10 +295,10 @@ function addTile(mouseEvent) {
     var mouseX = clicked[0];
     var mouseY = clicked[1];
 
-    layers[currentLayer].values = layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
+    project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
     if (!eraserMode) {
-        layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
+        project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
 
     redrawCell(mouseX, mouseY);
@@ -350,7 +322,7 @@ function redrawCell(x, y) {
     var ctx = mainCanvas.getContext("2d");
     ctx.clearRect(x, y, project.tileSize, project.tileSize);
 
-    layers.sort(l => l.index).forEach((layer) => {
+    project.layers.sort(l => l.index).forEach((layer) => {
         layer.values.sort(function (a, b) {
             if (a.X < b.X) {
                 return -1;
@@ -388,7 +360,7 @@ function drawMainCanvas() {
     var ctx = mainCanvas.getContext("2d");
     ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
-    layers.sort(l => l.index).forEach((layer) => {
+    project.layers.sort(l => l.index).forEach((layer) => {
         layer.values.sort(function (a, b) {
             if (a.X < b.X) {
                 return -1;
@@ -423,7 +395,7 @@ function drawMainCanvas() {
 
 // Reset state to empty
 function clearMainCanvas() {
-    layers.forEach(l => l.values = []);
+    project.layers.forEach(l => l.values = []);
     drawMainCanvas();
 }
 

@@ -117,7 +117,7 @@ app.whenReady().then(() => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createLandingWindow();
     }
   });
 })
@@ -133,15 +133,19 @@ app.on('window-all-closed', function () {
 
 async function handleNewProject(newProjectData) {
   // Initialize the main window
+  console.log("Handling new project request...");
   createMainWindow();
 
   mainWindow.once('ready-to-show', () => {
-    var size = mainWindow.getSize();
-    console.log(size);
-    mainWindow.webContents.send('load-new-project', newProjectData);
-    mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
+    console.log('Main window is ready to show...');
     mainWindow.show();
   })
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Main window finished loading...');
+    console.table(newProjectData);
+    mainWindow.webContents.send('load-new-project', newProjectData);
+  });
 
   projectInitialized = true;
   landingWindow.close();
