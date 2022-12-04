@@ -47,9 +47,9 @@ createNewProjectButton.addEventListener('click', async () => {
             projectName: projectNameInput.value,
             tileSize: parseInt(tileSizeSelect.value),
             layerName: layerNameInput.value,
-            tilesetSrc: tilesetFileInput.value,
-            canvasWidth: mapDimensionsWidthInput.value,
-            canvasHeight: mapDimensionsHeightInput.value
+            tilesSourceImage: tilesetFileInput.value,
+            mapWidth: mapDimensionsWidthInput.value,
+            mapHeight: mapDimensionsHeightInput.value
         };
 
         await window.electronAPI.createNewProject(creationRequest);
