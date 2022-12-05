@@ -41,7 +41,14 @@ div {
    transition: width .4s;
    transition: height .4s;
    overflow: auto;
+   max-height: 756px;
 }
+
+@media only screen and (min-width: 1200px) {
+   #canvas-wrapper{
+     max-height: 1114px;
+   }
+ }
 
 #tileset-container {
    transition: width .4s;
@@ -69,8 +76,6 @@ div {
    background: #202020;
    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
    width: 100%;
-   padding-bottom: 16px;
-   border-radius: 6px;
 }
 
 .card header {
@@ -91,10 +96,19 @@ div {
 }
 
 .main-console {
+   min-height: 75vh;
+   max-height: 78vh;
    width: 100%;
    display: flex;
    padding: 20px;
 }
+
+@media only screen and (min-height: 1081px) {
+   .main-console {
+      min-height: 78vh;
+      max-height: 83vh;
+   }
+ }
 
 /* The Modal (background) */
 .modal {
@@ -140,8 +154,8 @@ div {
 
 .tileset-aside {
    width: 18%;
+   min-width: 300px;
    border: 1px solid #969da8;
-   border-radius: 6px;
 }
 
 #map-header {
@@ -170,17 +184,26 @@ div {
 }
 
 .canvas-container {
+   max-width: 1515px;
    width: 100%;
    height: 100%;
    border: 1px solid #969da8;
-   border-radius: 6px;
 }
+
+
+@media only screen and (min-width: 1200px) {
+   .canvas-container {
+     max-width: 1992px;
+   }
+ }
+
 
 .card_body {
    display: flex;
 }
 
 .console-partition {
+   min-width: 12px;
    width: 1%;
    height: 100%;
 }
@@ -198,7 +221,6 @@ input {
    width: 100%;
    height: 35px;
    border-bottom: 4px solid #969da8;
-   border-radius: 6px;
 }
 
 select {
@@ -212,17 +234,16 @@ select {
    color: #fff;
    border-top: 4px solid transparent;
    border-bottom: 4px solid #696e77;
-   border-radius: 6px;
 }
 
 fieldset {
-   border-radius: 6px;
    margin-bottom: 10px;
    margin-top: 10px;
    padding: 30px;
 }
 
 .project-creation-panel {
+   padding-bottom: 16px;
    width: 90%;
    margin: auto;
 }
@@ -244,7 +265,6 @@ fieldset {
    border-top: 4px solid transparent;
    border-bottom: 4px solid #3166c7;
    color: #fff;
-   border-radius: 6px;
    outline: 0;
    cursor: pointer;
 }
@@ -262,7 +282,6 @@ fieldset {
    border-top: 4px solid transparent;
    border-bottom: 4px solid #f39646;
    color: #111;
-   border-radius: 6px;
    outline: 0;
    cursor: pointer;
 }
@@ -310,7 +329,6 @@ fieldset {
    border-top: 4px solid transparent;
    border-bottom: 4px solid #b43434;
    color: #111;
-   border-radius: 6px;
    outline: 0;
    cursor: pointer;
 }
@@ -326,6 +344,7 @@ fieldset {
 }
 
 .landing-menu {
+   padding-bottom: 16px;
    margin: auto;
 }
 
@@ -347,7 +366,6 @@ label {
    padding-left: 20px;
    background-color: #f44336;
    color: white;
-   border-radius: 6px;
    height: 75px;
    width: 90%;
    position: absolute;
@@ -373,23 +391,23 @@ label {
 }
 
 /* width */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
    width: 5px;
-}
+} */
 
 /* Track */
-::-webkit-scrollbar-track {
+/* ::-webkit-scrollbar-track {
    box-shadow: inset 0 0 5px grey;
    border-radius: 10px;
-}
+} */
 
 /* Handle */
-::-webkit-scrollbar-thumb {
+/* ::-webkit-scrollbar-thumb {
    background: #969da8;
    border-radius: 5px;
-}
+} */
 
 /* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
+/* ::-webkit-scrollbar-thumb:hover {
    background: #838a94;
-}
+} */

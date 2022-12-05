@@ -1,6 +1,5 @@
 Fix Tile Settings Form
 Fix Map Settings Form
-Middle Mouse Canvas Navigation
 Collidable Tiles?
 Exporting to JSON
 Prefab Tiles

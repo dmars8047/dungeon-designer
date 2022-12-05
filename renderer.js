@@ -9,6 +9,7 @@ let currentLayer = 0;
 //
 let mainContent = document.getElementById("main-content");
 let mapCanvas = document.getElementById("map-canvas");
+let mapCanvasWrapper = document.getElementById("canvas-wrapper");
 let clearCanvasButton = document.getElementById("clear-canvas-button");
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
 let importTilesetButton = document.getElementById("open-file-button");
@@ -26,11 +27,13 @@ let eraserToolButton = document.getElementById("eraser-tool-btn");
 // Function Variables
 //
 let tileSetSourceImage = new Image();
-let isMouseDown = false;
+let isLeftMouseDown = false;
+let isMiddleMouseDown = false;
 let canvasCursor = [0, 0];
 let eraserMode = false;
 let canvasCursorColor = "#30ff5d";
 let cursorPosition = [0, 0];
+let pos = {};
 
 //
 // Event Functions
@@ -95,26 +98,55 @@ layerSelect.onchange = (event) => {
 //Bind mouse events for painting (or removing) tiles on click/drag
 mapCanvas.addEventListener("mouseup", (event) => {
     if (event.button === 0) {
-        isMouseDown = false;
+        isLeftMouseDown = false;
+    }
+    else if (event.button === 1) {
+        mapCanvas.style.cursor = "auto";
+        isMiddleMouseDown = false;
     }
 });
 
 mapCanvas.addEventListener("mouseleave", () => {
-    isMouseDown = false;
+    isLeftMouseDown = false;
+    isMiddleMouseDown = false;
     clearPreviousCanvasCursor();
+    mapCanvas.style.cursor = 'auto';
 });
 
 mapCanvas.addEventListener("mousedown", (event) => {
     if (event.button === 0) {
-        isMouseDown = true;
+        isLeftMouseDown = true;
         addTile(event);
         drawCanvasCursor(getMouseCoordinates(event));
+    }
+    else if (event.button === 1) {
+        isMiddleMouseDown = true;
+        mapCanvas.style.cursor = "grabbing";
+        pos = {
+            // The current scroll
+            left: mapCanvasWrapper.scrollLeft,
+            top: mapCanvasWrapper.scrollTop,
+            // Get the current mouse position
+            x: event.clientX,
+            y: event.clientY,
+        };
     }
 });
 
 mapCanvas.addEventListener("mousemove", (event) => {
-    if (isMouseDown) {
+    if (isLeftMouseDown) {
         addTile(event);
+    }
+
+    if (isMiddleMouseDown) {
+        // How far the mouse has been moved
+        const dx = event.clientX - pos.x;
+        const dy = event.clientY - pos.y;
+        console.log(dx + " " + dy);
+
+        // Scroll the element
+        mapCanvasWrapper.scrollTop = pos.top - dy;
+        mapCanvasWrapper.scrollLeft = pos.left - dx;
     }
 
     drawCanvasCursor(getMouseCoordinates(event));
@@ -243,7 +275,7 @@ function drawCanvasCursor(coords, forceUpdate = false) {
     // Dont update if the mouse is in the same position
     // Unless the user is drawing tiles to the canvas so the tile doesnt overwrite the cursor
     // Or the update needs to be forced
-    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isMouseDown || forceUpdate) {
+    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isLeftMouseDown || forceUpdate) {
 
         clearPreviousCanvasCursor();
         canvasCursor[0] = coords[0];

@@ -11,7 +11,7 @@ let projectInitialized = false;
 function createLandingWindow() {
   landingWindow = new BrowserWindow({
     width: 500,
-    height: 300,
+    height: 268,
     show: true,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
@@ -139,6 +139,7 @@ async function handleNewProject(newProjectData) {
   mainWindow.once('ready-to-show', () => {
     console.log('Main window is ready to show...');
     mainWindow.show();
+    mainWindow.maximize();
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
@@ -152,7 +153,7 @@ async function handleNewProject(newProjectData) {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 700);
+  landingWindow.setSize(800, 664);
   landingWindow.center();
 }
 
@@ -217,6 +218,7 @@ async function handleOpenProjectFromLanding() {
         mainWindow.once('ready-to-show', () => {
           console.log('Main window is ready to show...');
           mainWindow.show();
+          mainWindow.maximize();
         })
       
         mainWindow.webContents.on('did-finish-load', () => {
