@@ -182,26 +182,6 @@ async function handleAppQuit() {
   app.quit();
 }
 
-async function handleSaveProject(mainWindow) {
-  if (!projectFilePath) {
-    const { canceled, filePath } = await dialog.showSaveDialog({
-      filters: [{
-        name: 'Dungeon Designer Project File',
-        extensions: ['ddes']
-      }]
-    });
-
-    if (canceled) {
-      return
-    }
-    else {
-      projectFilePath = filePath;
-    }
-
-    mainWindow.webContents.send('save-project', projectFilePath);
-  }
-}
-
 async function handleOpenProjectFromLanding() {
   landingWindow.blur();
   landingWindow.setEnabled(false);
@@ -220,6 +200,8 @@ async function handleOpenProjectFromLanding() {
   else {
     projectFilePath = filePaths[0];
 
+    console.log(projectFilePath);
+
     const fs = require('fs');
 
     fs.readFile(projectFilePath, 'utf-8', function (err, projectDataString) {
@@ -230,8 +212,16 @@ async function handleOpenProjectFromLanding() {
         projectInitialized = true;
         landingWindow.show = false;
 
-        mainWindow.show();
-        mainWindow.webContents.send('load-project', JSON.parse(projectDataString));
+        createMainWindow();
+
+        mainWindow.once('ready-to-show', () => {
+          console.log('Main window is ready to show...');
+          mainWindow.show();
+        })
+      
+        mainWindow.webContents.on('did-finish-load', () => {
+          mainWindow.webContents.send('load-project-from-file', JSON.parse(projectDataString));
+        });
 
         landingWindow.close();
         if (landingWindow) {
@@ -269,8 +259,33 @@ async function handleOpenProject(mainWindow) {
   }
 }
 
+async function handleSaveProject(mainWindow) {
+  console.log("Save request recieved...");
+
+  console.log(projectFilePath);
+  if (!projectFilePath) {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      filters: [{
+        name: 'Dungeon Designer Project File',
+        extensions: ['ddes']
+      }]
+    });
+
+    if (canceled) {
+      return
+    }
+    else {
+      projectFilePath = filePath;
+    }
+  }
+
+  mainWindow.webContents.send('save-project', projectFilePath);
+}
+
 async function saveProjectFile(payload) {
   const fs = require('fs');
+
+  console.log("Project file path: " + projectFilePath);
 
   fs.writeFile(projectFilePath, JSON.stringify(payload), err => {
     if (err) {

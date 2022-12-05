@@ -185,7 +185,7 @@ div {
    height: 100%;
 }
 
-#main-canvas {
+#map-canvas {
    cursor: none;
    display: block;
    margin: auto;
