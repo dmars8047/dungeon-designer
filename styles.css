@@ -102,7 +102,7 @@ body {
    /* Stay in place */
    z-index: 1;
    /* Sit on top */
-   padding-top: 100px;
+   padding-top: 50px;
    /* Location of the box */
    left: 0;
    top: 0;
@@ -121,12 +121,11 @@ body {
 /* Modal Content */
 .modal-content {
    position: relative;
-   height: 800px;
+   height: 50vh;
    background-color: #333;
    margin: auto;
-   padding: 20px;
    border: 1px solid #969da8;
-   width: 600px;
+   width: 30vw;
 }
 
 /* The Close Button */
@@ -406,9 +405,10 @@ label {
 }
 
 .modal-header {
+   border-bottom: 1px solid #969da8;
    text-align: center;
 }
 
-.modal-header>h1 {
+.modal-header>h2 {
    text-decoration: underline;
 }
