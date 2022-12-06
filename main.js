@@ -10,8 +10,8 @@ let projectInitialized = false;
 
 function createLandingWindow() {
   landingWindow = new BrowserWindow({
-    width: 500,
-    height: 268,
+    width: 512,
+    height: 256,
     show: true,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
@@ -30,6 +30,8 @@ function createLandingWindow() {
       app.quit();
     }
   });
+
+  landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
@@ -42,6 +44,7 @@ function createMainWindow() {
     height: primaryDisplay.size.height,
     resizable: false,
     show: false,
+    autoHideMenuBar: true,
     icon: './Assets/dungeondesignericon.png',
     title: 'Dungeon Designer',
     webPreferences: {
@@ -153,13 +156,13 @@ async function handleNewProject(newProjectData) {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 664);
+  landingWindow.setSize(800, 680);
   landingWindow.center();
 }
 
 async function handleNewProjectCreationScreenExited() {
   landingWindow.setResizable(true);
-  landingWindow.setSize(500, 300);
+  landingWindow.setSize(512, 256);
   landingWindow.setResizable(false);
   landingWindow.center();
 }

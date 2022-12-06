@@ -13,11 +13,11 @@
 </head>
 
 <body>
-  <div class="card">
-    <header>
+  <div id="landing-menu-card" class="card landing-menu-card">
+    <header id="landing-header" class="landing-header">
       <img style="margin: auto;" src="./Assets/dungeondesignerlogo.png" />
     </header>
-    <div class="card_body">
+    <div id="landing-body" class="card-body landing-body">
       <div id="landing-menu" class="flex-container landing-menu">
         <div>
           <button id="new-project-button" title="New Project" type="button" id="open-file-button"
@@ -33,7 +33,14 @@
           </button>
         </div>
       </div>
-      <div id="new-project-menu" style="display: none; width: 100%;">
+    </div>
+  </div>
+  <div id="new-project-card" class="card new-project-menu-card">
+    <header id="new-project-menu-header" class="new-project-menu-header">
+      <img style="margin: auto;" src="./Assets/dungeondesignerlogo.png" />
+    </header>
+    <div id="new-project-card-body" class="new-project-card-body card-body">
+      <div id="new-project-menu">
         <div class="grid-container project-creation-panel">
           <div style="grid-column: 1 / span 4; grid-row: 1;">
             <fieldset>
@@ -41,7 +48,8 @@
               <div class="grid-container">
                 <div style="grid-column: 1 / span 2; grid-row: 1;">
                   <label for="projectName">Name:</label>
-                  <input type="text" id="project-name-input" name="projectName" placeholder="Project name..." value="Test">
+                  <input type="text" id="project-name-input" name="projectName" placeholder="Project name..."
+                    value="Test">
                 </div>
                 <div style="grid-column: 3; grid-row: 1;">
                   <label for="tilesizes">Default Tile Size:</label>
@@ -79,7 +87,8 @@
                       <label for="layer-1">Tile Layer 1</label>
                     </div>
                     <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
-                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" name="layer-1" value="Test">
+                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" name="layer-1"
+                        value="Test">
                     </div>
                     <div style="grid-column: 1; grid-row: 2;">
                       <button id="import-tileset-button" type="button" style="height: 40px;"
@@ -87,7 +96,8 @@
                         Tileset</button>
                     </div>
                     <div style="grid-column: 2 / span 2; grid-row: 2;">
-                      <input id="tileset-file-input" type="text" placeholder="Tileset file path" value="/home/dmars/Pictures/Mar_Tiles.png" readonly>
+                      <input id="tileset-file-input" type="text" placeholder="Tileset file path"
+                        value="/home/dmars/Pictures/Mar_Tiles.png" readonly>
                     </div>
                   </div>
                 </div>

@@ -1,60 +1,58 @@
 html {
-   height: 100%
+   height: 100%;
+   margin: 0;
+   padding: 0;
 }
 
 body {
    font-family: 'Space Mono', monospace;
-   padding: 1em;
    background-color: #575655;
-   /* background: linear-gradient(180deg, #575655 0%, #30302f 100%); */
-   display: flex;
-   justify-content: space-around;
+   margin: 0;
+   padding: 0;
    color: #f9d339;
 }
 
-div {
-   transition: height .25s;
-   transition: width .25s;
+* {
+   box-sizing: border-box;
 }
 
 #main-content {
-   transition: height .4s;
-   transition: width .4s;
+   width: 98vw;
+   height: 92vh;
+   margin: 1vh 1vw 1vh 1vw;
 }
 
-#canvas-section {
-   transition: height .4s;
-   transition: width .4s;
+.main-header {
+   height: 5%;
 }
 
-#create-project-form-section {
-   transition: height .4s;
-   transition: width .4s;
+.main-header>img {
+   margin-left: 8px;
 }
 
-#tileset-section {
-   transition: height .4s;
-   transition: width .4s;
+.main-body {
+   height: 95%;
 }
 
 #canvas-wrapper {
-   transition: width .4s;
-   transition: height .4s;
+   height: 95%;
    overflow: auto;
-   max-height: 756px;
+   border-right: 1px solid #969da8;
+   border-bottom: 1px solid #969da8;
+   box-sizing: border-box;
 }
 
-@media only screen and (min-width: 1200px) {
-   #canvas-wrapper{
-     max-height: 1114px;
-   }
- }
+#tileset-header {
+   height: 5%;
+}
 
 #tileset-container {
-   transition: width .4s;
-   transition: height .4s;
-   margin-left: 15px;
+   height: 95%;
    overflow: auto;
+   border-right: 1px solid #969da8;
+   border-left: 1px solid #969da8;
+   border-bottom: 1px solid #969da8;
+   box-sizing: border-box;
 }
 
 .flex-container {
@@ -75,16 +73,12 @@ div {
 .card {
    background: #202020;
    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
-   width: 100%;
 }
 
 .card header {
    display: flex;
    justify-content: space-between;
    align-items: center;
-   border-bottom: 1px solid #ddd;
-   margin-bottom: 1em;
-   padding: 16px;
 }
 
 .tile-canvas {
@@ -96,19 +90,9 @@ div {
 }
 
 .main-console {
-   min-height: 75vh;
-   max-height: 78vh;
    width: 100%;
    display: flex;
-   padding: 20px;
 }
-
-@media only screen and (min-height: 1081px) {
-   .main-console {
-      min-height: 78vh;
-      max-height: 83vh;
-   }
- }
 
 /* The Modal (background) */
 .modal {
@@ -153,17 +137,20 @@ div {
 }
 
 .tileset-aside {
-   width: 18%;
-   min-width: 300px;
-   border: 1px solid #969da8;
+   width: 20%;
 }
 
 #map-header {
    margin-bottom: 0;
+   border-top: 1px solid #969da8;
+   border-right: 1px solid #969da8;
+   border-bottom: 1px solid #969da8;
+   height: 5%;
 }
 
 #tileset-header {
    display: flex;
+   border: 1px solid #969da8;
    margin-bottom: 0;
 }
 
@@ -183,23 +170,18 @@ div {
    width: 33%;
 }
 
-.canvas-container {
-   max-width: 1515px;
-   width: 100%;
-   height: 100%;
-   border: 1px solid #969da8;
+.tile-tool-container>button {
+   margin-right: 8px;
 }
 
+.canvas-container {
+   width: 80%;
+   height: 100%;
+}
 
-@media only screen and (min-width: 1200px) {
-   .canvas-container {
-     max-width: 1992px;
-   }
- }
-
-
-.card_body {
+.card-body {
    display: flex;
+   width: 100%;
 }
 
 .console-partition {
@@ -307,8 +289,12 @@ fieldset {
    justify-content: right;
 }
 
-.map-tool-container > button {
+.map-tool-container>button {
    margin-left: 8px;
+}
+
+#btn-map-settings {
+   margin-right: 8px;
 }
 
 .map-header-title {
@@ -338,18 +324,55 @@ fieldset {
    transform: scale(1.05);
 }
 
+.landing-menu-card {
+   height: 88vh;
+   width: 92vw;
+   margin: 6vh 4vw 6vh 4vw;
+}
+
+.landing-header {
+   border-bottom: 1px solid #969da8;
+   height: 30%;
+}
+
+.landing-body {
+   height: 70%;
+}
+
 .landing-button {
    width: 100px;
    height: 100px;
 }
 
 .landing-menu {
-   padding-bottom: 16px;
+   width: 80%;
+   justify-content: space-between;
    margin: auto;
 }
 
 .landing-menu>div {
    padding: 10px;
+}
+
+.new-project-menu-card {
+   display: none;
+   height: 92vh;
+   width: 92vw;
+   margin: 4vh 4vw 4vh 4vw;
+}
+
+.new-project-menu-header {
+   height: 12%;
+   border-bottom: 1px solid #969da8;
+}
+
+.new-project-card-body {
+   height: 88%;
+}
+
+#new-project-menu {
+   margin: auto;
+   width: 100%;
 }
 
 label {
@@ -386,28 +409,6 @@ label {
    text-align: center;
 }
 
-.modal-header > h1 {
+.modal-header>h1 {
    text-decoration: underline;
 }
-
-/* width */
-/* ::-webkit-scrollbar {
-   width: 5px;
-} */
-
-/* Track */
-/* ::-webkit-scrollbar-track {
-   box-shadow: inset 0 0 5px grey;
-   border-radius: 10px;
-} */
-
-/* Handle */
-/* ::-webkit-scrollbar-thumb {
-   background: #969da8;
-   border-radius: 5px;
-} */
-
-/* Handle on hover */
-/* ::-webkit-scrollbar-thumb:hover {
-   background: #838a94;
-} */

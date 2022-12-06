@@ -1,8 +1,10 @@
 let newProjectButton = document.getElementById('new-project-button');
 let loadProjectButton = document.getElementById('load-project-button');
 let quitButton = document.getElementById('quit-button');
-let landingMenu = document.getElementById('landing-menu');
-let newProjectMenu = document.getElementById('new-project-menu');
+
+let landingMenuCard = document.getElementById('landing-menu-card');
+let newProjectCard = document.getElementById('new-project-card');
+
 let cancelNewProjectButton = document.getElementById('cancel-create-project-button');
 let createNewProjectButton = document.getElementById('create-project-button');
 let projectNameInput = document.getElementById('project-name-input');
@@ -27,15 +29,15 @@ importTilesetButton.addEventListener('click', async () => {
 });
 
 newProjectButton.addEventListener('click', async () => {
-    landingMenu.style.display = 'none';
-    newProjectMenu.style.display = 'grid';
+    landingMenuCard.style.display = 'none';
+    newProjectCard.style.display = 'block';
     window.electronAPI.expandWindowForProjectCreation();
 });
 
 cancelNewProjectButton.addEventListener('click', async () => {
-    newProjectMenu.style.display = 'none';
+    newProjectCard.style.display = 'none';
     errorMessageContainer.style.display = 'none';
-    landingMenu.style.display = 'flex';
+    landingMenuCard.style.display = 'block';
     window.electronAPI.goBackFromProjectCreation();
 });
 
