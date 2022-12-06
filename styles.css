@@ -121,11 +121,11 @@ body {
 /* Modal Content */
 .modal-content {
    position: relative;
-   height: 50vh;
+   height: 55vh;
    background-color: #333;
    margin: auto;
    border: 1px solid #969da8;
-   width: 30vw;
+   width: 35vw;
 }
 
 /* The Close Button */
