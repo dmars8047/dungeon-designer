@@ -9,7 +9,6 @@ let currentLayer = 0;
 //
 // HTML Elements
 //
-let mainContent = document.getElementById("main-content");
 let mapCanvas = document.getElementById("map-canvas");
 let mapCanvasWrapper = document.getElementById("canvas-wrapper");
 let clearCanvasButton = document.getElementById("clear-canvas-button");
@@ -31,12 +30,18 @@ let saveButton = document.getElementById('save-btn');
 let tileSetSourceImage = new Image();
 let isLeftMouseDown = false;
 let isMiddleMouseDown = false;
-let canvasCursor = [0, 0];
 let eraserMode = false;
-let canvasCursorColor = "#30ff5d";
-let cursorPosition = [0, 0];
 let pos = {}; // helps with dragging
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
+
+let mapCursorPosition = [-1, -1];
+let lastSetTilePosition = [-1, -1];
+let allowDrawMapCursor = true;
+let allowSetTile = true;
+
+const cursorTileModeColor = "#30ff5d";
+const cursorEraserModeColor = "#f44336";
+let mapCursorColor = cursorTileModeColor;
 
 //
 // Event Functions
@@ -53,7 +58,6 @@ window.onkeydown = (event) => {
     switch (event.key) {
         case 'e':
             toggleEraserMode();
-            drawCanvasCursor(cursorPosition, true);
             break;
         case 't':
             toggleMapSettingsModal(false);
@@ -123,15 +127,20 @@ mapCanvas.addEventListener("mouseup", (event) => {
 mapCanvas.addEventListener("mouseleave", () => {
     isLeftMouseDown = false;
     isMiddleMouseDown = false;
-    clearPreviousCanvasCursor();
+    allowDrawMapCursor = true;
+    allowSetTile = true;
+    lastSetTilePosition = [-1, -1];
+    clearCanvasCursor();
     mapCanvas.style.cursor = 'auto';
 });
 
 mapCanvas.addEventListener("mousedown", (event) => {
     if (event.button === 0) {
         isLeftMouseDown = true;
-        addTile(event);
-        drawCanvasCursor(getMouseCoordinates(event));
+        let mouseCoords = getMouseCoordinatesOnMap(event);
+        if (allowSetTile) {
+            setTile(mouseCoords[0], mouseCoords[1]);
+        }
     }
     else if (event.button === 1) {
         isMiddleMouseDown = true;
@@ -148,22 +157,24 @@ mapCanvas.addEventListener("mousedown", (event) => {
 });
 
 mapCanvas.addEventListener("mousemove", (event) => {
-    if (isLeftMouseDown) {
-        addTile(event);
-    }
+    let mouseCoords = getMouseCoordinatesOnMap(event);
 
-    if (isMiddleMouseDown) {
+    if (isLeftMouseDown && allowSetTile) {
+        setTile(mouseCoords[0], mouseCoords[1]);
+    }
+    else if (isMiddleMouseDown) {
         // How far the mouse has been moved
         const dx = event.clientX - pos.x;
         const dy = event.clientY - pos.y;
-        console.log(dx + " " + dy);
-
         // Scroll the element
         mapCanvasWrapper.scrollTop = pos.top - dy;
         mapCanvasWrapper.scrollLeft = pos.left - dx;
     }
-
-    drawCanvasCursor(getMouseCoordinates(event));
+    else {
+        if (allowDrawMapCursor) {
+            drawCanvasCursor(mouseCoords[0], mouseCoords[1]);
+        }
+    }
 });
 
 // Clear Canvas button click event
@@ -185,12 +196,16 @@ function toggleEraserMode() {
 
     if (eraserMode) {
         eraserToolButton.style.background = "#f39646";
-        canvasCursorColor = "#f44336";
+        mapCursorColor = cursorEraserModeColor;
     }
     else {
         eraserToolButton.style.background = "#f9d339";
-        canvasCursorColor = "#30ff5d";
+        mapCursorColor = cursorTileModeColor;
     }
+
+    lastSetTilePosition = [-1, -1];
+    allowSetTile = true;
+    drawCanvasCursor(mapCursorPosition[0], mapCursorPosition[1]);
 }
 
 // Tile Settings Modal
@@ -265,7 +280,6 @@ window.electronAPI.loadNewProject((_, value) => {
 
 
 tileSetSourceImage.onload = () => {
-    console.log("Tileset image loaded");
     initTileSelector();
     drawMap();
 };
@@ -274,39 +288,33 @@ tileSetSourceImage.onload = () => {
 // Logic Functions
 //
 
-function clearPreviousCanvasCursor() {
-    drawCell(canvasCursor[0], canvasCursor[1]);
-    drawCell(canvasCursor[0] + project.tileSize, canvasCursor[1]);
-    drawCell(canvasCursor[0] - project.tileSize, canvasCursor[1]);
-    drawCell(canvasCursor[0], canvasCursor[1] + project.tileSize);
-    drawCell(canvasCursor[0], canvasCursor[1] - project.tileSize);
-    drawCell(canvasCursor[0] - project.tileSize, canvasCursor[1] - project.tileSize);
-    drawCell(canvasCursor[0] + project.tileSize, canvasCursor[1] - project.tileSize);
-    drawCell(canvasCursor[0] - project.tileSize, canvasCursor[1] + project.tileSize);
-    drawCell(canvasCursor[0] + project.tileSize, canvasCursor[1] + project.tileSize);
+function clearCanvasCursor() {
+    drawCell(mapCursorPosition[0], mapCursorPosition[1]);
+    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1]);
+    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1]);
+    drawCell(mapCursorPosition[0], mapCursorPosition[1] + project.tileSize);
+    drawCell(mapCursorPosition[0], mapCursorPosition[1] - project.tileSize);
+    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1] - project.tileSize);
+    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1] - project.tileSize);
+    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1] + project.tileSize);
+    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1] + project.tileSize);
 }
 
-function drawCanvasCursor(coords, forceUpdate = false) {
-    // Dont update if the mouse is in the same position
-    // Unless the user is drawing tiles to the canvas so the tile doesnt overwrite the cursor
-    // Or the update needs to be forced
-    if (canvasCursor[0] !== coords[0] || canvasCursor[1] !== coords[1] || isLeftMouseDown || forceUpdate) {
-
-        clearPreviousCanvasCursor();
-        canvasCursor[0] = coords[0];
-        canvasCursor[1] = coords[1];
-        let ctx = mapCanvas.getContext("2d");
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.strokeStyle = canvasCursorColor;
-        ctx.rect(coords[0], coords[1], project.tileSize, project.tileSize);
-        ctx.stroke();
-    }
+function drawCanvasCursor(mouseX, mouseY) {
+    console.log("Drawing cursor: " + mouseX + "," + mouseY);
+    clearCanvasCursor();
+    mapCursorPosition[0] = mouseX;
+    mapCursorPosition[1] = mouseY;
+    let ctx = mapCanvas.getContext("2d");
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.strokeStyle = mapCursorColor;
+    ctx.rect(mouseX, mouseY, project.tileSize, project.tileSize);
+    ctx.stroke();
 }
 
 // Updates the set layer dropdown
 function updateLayers() {
-
     for (let i = 0; i < project.layers.length; i++) {
         let opt = document.createElement('option');
         opt.value = project.layers[i].index;
@@ -338,27 +346,44 @@ function selectTile(x, y) {
 }
 
 // Handler for placing new tiles on the map
-function addTile(mouseEvent) {
-    let clicked = getMouseCoordinates(mouseEvent);
-    let mouseX = clicked[0];
-    let mouseY = clicked[1];
-
+function setTile(mouseX, mouseY) {
+    console.log("Drawing tile: " + mouseX + "," + mouseY);
     project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
     if (!eraserMode) {
         project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
+    else {
+        project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
+    }
+
+    lastSetTilePosition = [mouseX, mouseY];
 
     drawCell(mouseX, mouseY);
+    drawCanvasCursor(mouseX, mouseY);
 }
 
 // Utility for getting coordinates of mouse click
-function getMouseCoordinates(e) {
+function getMouseCoordinatesOnMap(e) {
     const { x, y } = e.target.getBoundingClientRect();
-    const mouseX = e.clientX - x;
-    const mouseY = e.clientY - y;
-    cursorPosition = [Math.floor(mouseX / project.tileSize) * project.tileSize, Math.floor(mouseY / project.tileSize) * project.tileSize]
-    return cursorPosition;
+    const mouseX = Math.floor((e.clientX - x) / project.tileSize) * project.tileSize;
+    const mouseY = Math.floor((e.clientY - y) / project.tileSize) * project.tileSize;
+
+    if (mouseX === mapCursorPosition[0] && mouseY === mapCursorPosition[1]) {
+        allowDrawMapCursor = false;
+    }
+    else {
+        allowDrawMapCursor = true;
+    }
+
+    if (mouseX === lastSetTilePosition[0] && mouseY === lastSetTilePosition[1]) {
+        allowSetTile = false;
+    }
+    else {
+        allowSetTile = true;
+    }
+
+    return [mouseX, mouseY];
 }
 
 // Sets the current layer
@@ -366,6 +391,7 @@ function setLayer(newLayer) {
     currentLayer = newLayer;
 }
 
+// Draws a cell on the map using the layer data for that position
 function drawCell(x, y) {
     let ctx = mapCanvas.getContext("2d");
     ctx.clearRect(x, y, project.tileSize, project.tileSize);
