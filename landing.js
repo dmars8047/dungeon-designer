@@ -1,3 +1,5 @@
+import { DisplayMessage, MessageType } from './modules/messaging.js';
+
 let newProjectButton = document.getElementById('new-project-button');
 let loadProjectButton = document.getElementById('load-project-button');
 let quitButton = document.getElementById('quit-button');
@@ -9,13 +11,8 @@ let cancelNewProjectButton = document.getElementById('cancel-create-project-butt
 let createNewProjectButton = document.getElementById('create-project-button');
 let projectNameInput = document.getElementById('project-name-input');
 let tileSizeSelect = document.getElementById('tile-size-select');
-let layerElementContainer = document.getElementById('layer-element-container');
-let pushLayerButton = document.getElementById('push-layer-button');
-let popLayerButton = document.getElementById('pop-layer-button');
 let tilesetFileInput = document.getElementById('tileset-file-input');
 let importTilesetButton = document.getElementById('import-tileset-button');
-let errorMessageContainer = document.getElementById('error-message-container');
-let errorMessage = document.getElementById('error-message');
 let mapDimensionsWidthInput = document.getElementById('map-dimensions-width-input');
 let mapDimensionsHeightInput = document.getElementById('map-dimensions-height-input');
 let layerNameInput = document.getElementById("layer-1-name-input");
@@ -36,7 +33,6 @@ newProjectButton.addEventListener('click', async () => {
 
 cancelNewProjectButton.addEventListener('click', async () => {
     newProjectCard.style.display = 'none';
-    errorMessageContainer.style.display = 'none';
     landingMenuCard.style.display = 'block';
     window.electronAPI.goBackFromProjectCreation();
 });
@@ -120,7 +116,7 @@ function projectCreateFormIsValid() {
 
     if (!layerNameInput.value) {
         if (!errorMessageText) {
-            errorMessageText = 'Each tileset layer must have a unique name.';
+            errorMessageText = 'A name is required for the initial tileset layer.';
         }
 
         layerNameInput.style.backgroundColor = '#ffc8c4';
@@ -131,26 +127,8 @@ function projectCreateFormIsValid() {
     }
 
     if (!isValid) {
-        errorMessageContainer.style.display = 'inline';
-        errorMessage.float
-        errorMessage.innerHTML = '<strong>Error:</strong>&nbsp;' + errorMessageText;
-        setTimeout(function () { fadeOutEffect(); }, 2500);
+        DisplayMessage(errorMessageText, 2500, MessageType.Error);
     }
 
     return isValid;
-}
-
-function fadeOutEffect() {
-    var fadeEffect = setInterval(function () {
-        if (!errorMessageContainer.style.opacity) {
-            errorMessageContainer.style.opacity = 1;
-        }
-        if (errorMessageContainer.style.opacity > 0) {
-            errorMessageContainer.style.opacity -= 0.1;
-        } else {
-            errorMessageContainer.style.display = 'none';
-            errorMessageContainer.style.opacity = 1;
-            clearInterval(fadeEffect);
-        }
-    }, 50);
 }

@@ -1,5 +1,5 @@
 Fix Tile Settings Form
 Fix Map Settings Form
-Collidable Tiles?
-Exporting to JSON
+Fix Layers
+Collidable Tiles
 Prefab Tiles

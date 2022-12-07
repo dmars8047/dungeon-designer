@@ -106,6 +106,7 @@ function createMainWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  ipcMain.handle('project:save', () => { handleSaveProject(mainWindow) });
   ipcMain.handle('dialog:openFile', handleFileOpen);
   ipcMain.handle('project:openProject', handleOpenProjectFromLanding);
   ipcMain.handle('app:quit', handleAppQuit);
@@ -223,7 +224,7 @@ async function handleOpenProjectFromLanding() {
           mainWindow.show();
           mainWindow.maximize();
         })
-      
+
         mainWindow.webContents.on('did-finish-load', () => {
           mainWindow.webContents.send('load-project-from-file', JSON.parse(projectDataString));
         });
@@ -267,7 +268,6 @@ async function handleOpenProject(mainWindow) {
 async function handleSaveProject(mainWindow) {
   console.log("Save request recieved...");
 
-  console.log(projectFilePath);
   if (!projectFilePath) {
     const { canceled, filePath } = await dialog.showSaveDialog({
       filters: [{
@@ -295,6 +295,9 @@ async function saveProjectFile(payload) {
   fs.writeFile(projectFilePath, JSON.stringify(payload), err => {
     if (err) {
       console.error(err);
+      mainWindow.webContents.send('save-project-completed', { message: "An error occurred when saving project. Error: " + err, success: false });
     }
   });
+
+  mainWindow.webContents.send('save-project-completed', { message: "Project file saved successfully. Project file path: " + projectFilePath, success: true });
 }

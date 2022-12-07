@@ -272,16 +272,6 @@ fieldset {
    transform: scale(1.05);
 }
 
-.push-pop-layer-button {
-   background-color: transparent;
-   color: #fad644;
-   font-weight: bold;
-}
-
-.push-pop-layer-button:hover {
-   transform: scale(1.1);
-}
-
 .map-tool-container {
    display: flex;
    width: 33%;

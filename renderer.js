@@ -1,3 +1,5 @@
+import { DisplayMessage, MessageType } from './modules/messaging.js';
+
 //
 // Project Data
 //
@@ -11,7 +13,6 @@ let mainContent = document.getElementById("main-content");
 let mapCanvas = document.getElementById("map-canvas");
 let mapCanvasWrapper = document.getElementById("canvas-wrapper");
 let clearCanvasButton = document.getElementById("clear-canvas-button");
-let selectedTile = [0, 0]; //Which tile we will paint from the menu
 let importTilesetButton = document.getElementById("open-file-button");
 let tilesetContainer = document.getElementById("tileset-container");
 let layerSelect = document.getElementById("layer-select");
@@ -22,6 +23,7 @@ let mapSettingsModal = document.getElementById("map-settings-modal");
 let closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
 let closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
 let eraserToolButton = document.getElementById("eraser-tool-btn");
+let saveButton = document.getElementById('save-btn');
 
 //
 // Function Variables
@@ -33,7 +35,8 @@ let canvasCursor = [0, 0];
 let eraserMode = false;
 let canvasCursorColor = "#30ff5d";
 let cursorPosition = [0, 0];
-let pos = {};
+let pos = {}; // helps with dragging
+let selectedTile = [0, 0]; //Which tile we will paint from the menu
 
 //
 // Event Functions
@@ -47,8 +50,6 @@ document.onload = () => {
 };
 
 window.onkeydown = (event) => {
-    console.log(event);
-
     switch (event.key) {
         case 'e':
             toggleEraserMode();
@@ -62,11 +63,24 @@ window.onkeydown = (event) => {
             toggleTileSettingsModal(false);
             toggleMapSettingsModal(true);
             break;
+        case 's':
+            if (event.ctrlKey) {
+                callProjectSave();
+            }
+            break;
         case 'Escape':
             toggleTileSettingsModal(false);
             toggleMapSettingsModal(false);
             break;
     }
+}
+
+saveButton.onclick = async () => {
+    await callProjectSave();
+}
+
+async function callProjectSave() {
+    await window.electronAPI.callProjectSave();
 }
 
 // When the user clicks anywhere outside of the modal, close it
@@ -216,23 +230,25 @@ function toggleMapSettingsModal(toggleMode) {
 //
 
 // Sends all information about the project so it can be saved
-window.electronAPI.saveProject((event, value) => {
-    console.log("Saving project...");
+window.electronAPI.saveProject((event, _) => {
     event.sender.send('project:saveToFile', project);
 });
 
+// Handles a successful save message from the back end.
+window.electronAPI.onSaveCompleted((_, value) => {
+    let messageType = value.success ? MessageType.Information : MessageType.Error;
+    DisplayMessage(value.message, 2500, messageType);
+});
+
 // Event handler for when a request to load a project from a file is recieved.
-window.electronAPI.loadProjectFromFile((event, value) => {
-    console.log("Setting up project from file...");
+window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
     tileSetSourceImage.src = project.tilesetImagePath;
     setMainCanvasDimensions();
     updateLayers();
 });
 
-window.electronAPI.loadNewProject((event, value) => {
-    console.log("Setting up new project...");
-
+window.electronAPI.loadNewProject((_, value) => {
     project = {
         name: value.name,
         tileSize: value.tileSize,
@@ -271,7 +287,6 @@ function clearPreviousCanvasCursor() {
 }
 
 function drawCanvasCursor(coords, forceUpdate = false) {
-
     // Dont update if the mouse is in the same position
     // Unless the user is drawing tiles to the canvas so the tile doesnt overwrite the cursor
     // Or the update needs to be forced
