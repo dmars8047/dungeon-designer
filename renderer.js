@@ -301,7 +301,6 @@ function clearCanvasCursor() {
 }
 
 function drawCanvasCursor(mouseX, mouseY) {
-    console.log("Drawing cursor: " + mouseX + "," + mouseY);
     clearCanvasCursor();
     mapCursorPosition[0] = mouseX;
     mapCursorPosition[1] = mouseY;
@@ -347,7 +346,6 @@ function selectTile(x, y) {
 
 // Handler for placing new tiles on the map
 function setTile(mouseX, mouseY) {
-    console.log("Drawing tile: " + mouseX + "," + mouseY);
     project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
     if (!eraserMode) {
