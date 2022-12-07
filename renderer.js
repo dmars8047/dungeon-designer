@@ -47,13 +47,6 @@ let mapCursorColor = cursorTileModeColor;
 // Event Functions
 //
 
-// Page/Menu loaded
-document.onload = () => {
-    if (project) {
-        drawMap();
-    }
-};
-
 window.onkeydown = (event) => {
     switch (event.key) {
         case 'e':
@@ -185,7 +178,11 @@ clearCanvasButton.onclick = () => {
 // Tileset source image loaded event
 tileSetSourceImage.onload = () => {
     initTileSelector();
-}
+    // This timeout is for a load timing issue.
+    setTimeout(() => {
+        drawMap();
+    }, 100);
+};
 
 eraserToolButton.onclick = () => {
     toggleEraserMode();
@@ -258,9 +255,9 @@ window.electronAPI.onSaveCompleted((_, value) => {
 // Event handler for when a request to load a project from a file is recieved.
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
-    tileSetSourceImage.src = project.tilesetImagePath;
-    setMainCanvasDimensions();
+    setMapDimensions();
     updateLayers();
+    tileSetSourceImage.src = project.tilesetImagePath;
 });
 
 window.electronAPI.loadNewProject((_, value) => {
@@ -273,16 +270,10 @@ window.electronAPI.loadNewProject((_, value) => {
         tilesetImagePath: value.tilesetImagePath
     };
 
-    tileSetSourceImage.src = project.tilesetImagePath;
-    setMainCanvasDimensions();
+    setMapDimensions();
     updateLayers();
+    tileSetSourceImage.src = project.tilesetImagePath;
 });
-
-
-tileSetSourceImage.onload = () => {
-    initTileSelector();
-    drawMap();
-};
 
 //
 // Logic Functions
@@ -323,7 +314,7 @@ function updateLayers() {
 }
 
 // Sets the dimensions of the main canvas
-function setMainCanvasDimensions() {
+function setMapDimensions() {
     mapCanvas.width = project.mapWidth;
     mapCanvas.height = project.mapHeight;
 }
@@ -350,9 +341,6 @@ function setTile(mouseX, mouseY) {
 
     if (!eraserMode) {
         project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
-    }
-    else {
-        project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
     }
 
     lastSetTilePosition = [mouseX, mouseY];
