@@ -23,6 +23,7 @@ let closeTileSettingsCornerButton = document.getElementById("close-tile-settings
 let closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
 let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
+let brushToolButton = document.getElementById('brush-tool-btn');
 let saveButton = document.getElementById('save-btn');
 
 //
@@ -35,13 +36,13 @@ let grabPosition = {}; // helps with dragging
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
 
 const MapModes = {
-    Draw: 0,
+    Brush: 0,
     Eraser: 1,
     Select: 2,
     Suspend: 3
 }
 
-let mapMode = MapModes.Draw;
+let mapMode = MapModes.Brush;
 
 let mapCursorPosition = [-1, -1];
 let lastSetTilePosition = [-1, -1];
@@ -49,6 +50,8 @@ let selectCells = [];
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
+const toolButtonPressedColor = "#f39646";
+const toolButtonNormalColor = "#f9d339";
 const cursorSelectModeColor = "#f202fa";
 const cursorDrawModeColor = "#30ff5d";
 const cursorEraserModeColor = "#f44336";
@@ -58,8 +61,15 @@ let mapCursorColor = cursorDrawModeColor;
 // Event Functions
 //
 
+window.onload = (event) => {
+    brushToolButton.style.background = toolButtonPressedColor;
+}
+
 window.onkeydown = (event) => {
     switch (event.key) {
+        case 'b':
+            changeMapMode(MapModes.Brush);
+            break;
         case 'e':
             changeMapMode(MapModes.Eraser);
             break;
@@ -251,27 +261,29 @@ function changeMapMode(desiredMode, toggleBehavior = true) {
 
     if (desiredMode === mapMode) {
         if (toggleBehavior)
-            desiredMode = MapModes.Draw;
+            desiredMode = MapModes.Brush;
         else
             return;
     }
 
-    eraserToolButton.style.background = "#f9d339";
-    selectToolButton.style.background = "#f9d339";
+    eraserToolButton.style.background = toolButtonNormalColor;
+    selectToolButton.style.background = toolButtonNormalColor;
+    brushToolButton.style.background = toolButtonNormalColor;
 
     switch (desiredMode) {
-        case MapModes.Draw:
-            mapMode = MapModes.Draw;
+        case MapModes.Brush:
+            mapMode = MapModes.Brush;
+            brushToolButton.style.background = toolButtonPressedColor;
             mapCursorColor = cursorDrawModeColor;
             break;
         case MapModes.Eraser:
             mapMode = MapModes.Eraser;
-            eraserToolButton.style.background = "#f39646";
+            eraserToolButton.style.background = toolButtonPressedColor;
             mapCursorColor = cursorEraserModeColor;
             break;
         case MapModes.Select:
             mapMode = MapModes.Select;
-            selectToolButton.style.background = "#f39646";
+            selectToolButton.style.background = toolButtonPressedColor;
             mapCursorColor = cursorSelectModeColor;
             break;
         case MapModes.Suspend:
@@ -428,7 +440,7 @@ function selectTile(x, y) {
 function setTile(mouseX, mouseY) {
     project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
-    if (mapMode === MapModes.Draw) {
+    if (mapMode === MapModes.Brush) {
         project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
 
