@@ -49,9 +49,11 @@ let selectCells = [];
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
+const maxSelectSize = 128;
+const cursorSelectModeTooLargeColor = "#ff1100";
 const cursorSelectModeColor = "#f202fa";
 const cursorDrawModeColor = "#30ff5d";
-const cursorEraserModeColor = "#f44336";
+const cursorEraserModeColor = "#ff8400";
 let mapCursorColor = cursorDrawModeColor;
 
 //
@@ -59,29 +61,31 @@ let mapCursorColor = cursorDrawModeColor;
 //
 
 window.onkeydown = (event) => {
-    switch (event.key) {
-        case 'e':
-            changeMapMode(MapModes.Eraser);
-            break;
-        case 't':
-            toggleMapSettingsModal(false);
-            toggleTileSettingsModal(true);
-            break;
-        case 'm':
-            toggleTileSettingsModal(false);
-            toggleMapSettingsModal(true);
-            break;
-        case 'q':
-            changeMapMode(MapModes.Select);
-            break;
-        case 's':
-            if (event.ctrlKey)
-                callProjectSave();
-            break;
-        case 'Escape':
-            toggleTileSettingsModal(false);
-            toggleMapSettingsModal(false);
-            break;
+    if (!event.repeat) {
+        switch (event.key) {
+            case 'e':
+                changeMapMode(MapModes.Eraser);
+                break;
+            case 't':
+                toggleMapSettingsModal(false);
+                toggleTileSettingsModal(true);
+                break;
+            case 'm':
+                toggleTileSettingsModal(false);
+                toggleMapSettingsModal(true);
+                break;
+            case 'q':
+                changeMapMode(MapModes.Select);
+                break;
+            case 's':
+                if (event.ctrlKey)
+                    callProjectSave();
+                break;
+            case 'Escape':
+                toggleTileSettingsModal(false);
+                toggleMapSettingsModal(false);
+                break;
+        }
     }
 }
 
@@ -125,6 +129,8 @@ mapCanvas.addEventListener("mouseup", (event) => {
         isLeftMouseDown = false;
         if (mapMode === MapModes.Select) {
             clearSelectModeCursor();
+            let mouseCoords = getMouseCoordinatesOnMap(event);
+            drawMapCursor(mouseCoords[0], mouseCoords[1]);
         }
     }
     else if (event.button === 1) {
@@ -148,7 +154,7 @@ mapCanvas.addEventListener("mousedown", (event) => {
         isLeftMouseDown = true;
         let mouseCoords = getMouseCoordinatesOnMap(event);
         if (mapMode === MapModes.Select) {
-
+            mapCursorColor = cursorSelectModeColor;
         }
         else if (allowSetTile) {
             setTile(mouseCoords[0], mouseCoords[1]);
@@ -171,34 +177,7 @@ mapCanvas.addEventListener("mousemove", (event) => {
 
     if (mapMode === MapModes.Select && isLeftMouseDown) {
         if (allowDrawMapCursor) {
-            console.log("Selecting!");
-            const startX = mapCursorPosition[0];
-            const startY = mapCursorPosition[1];
-            const mouseX = mouseCoords[0];
-            const mouseY = mouseCoords[1];
-
-            let rectStartX = Math.min(startX, mouseX);
-            let rectStartY = Math.min(startY, mouseY);
-            let maxX = Math.max(startX, mouseX);
-            let maxY = Math.max(startY, mouseY);
-            let rectWidth = maxX - rectStartX + project.tileSize;
-            let rectHeight = maxY - rectStartY + project.tileSize;
-
-            clearSelectModeCursor();
-            drawSelectModeCursor(rectStartX, rectStartY, rectWidth, rectHeight);
-
-            selectCells = [];
-
-            const cleanupHeight = rectStartY + rectHeight + project.tileSize;
-            const cleanupWidth = rectStartX + rectWidth + project.tileSize;
-            const cleanupY = rectStartY - project.tileSize;
-            const cleanupX = rectStartX - project.tileSize;
-
-            for (let j = cleanupY; j <= cleanupHeight; j += project.tileSize) {
-                for (let i = cleanupX; i <= cleanupWidth; i += project.tileSize) {
-                    selectCells.push({ x: i, y: j });
-                }
-            }
+            drawSelectionArea(mouseCoords);
         }
     }
     else if (isLeftMouseDown && allowSetTile) {
@@ -218,6 +197,43 @@ mapCanvas.addEventListener("mousemove", (event) => {
         }
     }
 });
+
+function drawSelectionArea(mouseCoords) {
+    const startX = mapCursorPosition[0];
+    const startY = mapCursorPosition[1];
+    const mouseX = mouseCoords[0];
+    const mouseY = mouseCoords[1];
+
+    let rectStartX = Math.min(startX, mouseX);
+    let rectStartY = Math.min(startY, mouseY);
+    let maxX = Math.max(startX, mouseX);
+    let maxY = Math.max(startY, mouseY);
+    let rectWidth = maxX - rectStartX + project.tileSize;
+    let rectHeight = maxY - rectStartY + project.tileSize;
+
+    if (rectWidth > maxSelectSize || rectHeight > maxSelectSize) {
+        mapCursorColor = cursorSelectModeTooLargeColor;
+    }
+    else {
+        mapCursorColor = cursorSelectModeColor;
+    }
+
+    clearSelectModeCursor();
+    drawSelectModeCursor(rectStartX, rectStartY, rectWidth, rectHeight);
+
+    selectCells = [];
+
+    const cleanupHeight = rectStartY + rectHeight + project.tileSize;
+    const cleanupWidth = rectStartX + rectWidth + project.tileSize;
+    const cleanupY = rectStartY - project.tileSize;
+    const cleanupX = rectStartX - project.tileSize;
+
+    for (let j = cleanupY; j <= cleanupHeight; j += project.tileSize) {
+        for (let i = cleanupX; i <= cleanupWidth; i += project.tileSize) {
+            selectCells.push({ x: i, y: j });
+        }
+    }
+}
 
 function clearSelectModeCursor() {
     for (let i = 0; i < selectCells.length; i++) {
