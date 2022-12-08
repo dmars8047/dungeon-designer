@@ -10,8 +10,8 @@ let currentLayer = 0;
 // HTML Elements
 //
 let mapCanvas = document.getElementById("map-canvas");
-let mapCanvasWrapper = document.getElementById("canvas-wrapper");
-let clearCanvasButton = document.getElementById("clear-canvas-button");
+let mapWrapper = document.getElementById("canvas-wrapper");
+let clearMapButton = document.getElementById("clear-canvas-button");
 let importTilesetButton = document.getElementById("open-file-button");
 let tilesetContainer = document.getElementById("tileset-container");
 let layerSelect = document.getElementById("layer-select");
@@ -22,6 +22,7 @@ let mapSettingsModal = document.getElementById("map-settings-modal");
 let closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
 let closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
 let eraserToolButton = document.getElementById("eraser-tool-btn");
+let selectToolButton = document.getElementById('select-tool-btn');
 let saveButton = document.getElementById('save-btn');
 
 //
@@ -30,18 +31,28 @@ let saveButton = document.getElementById('save-btn');
 let tileSetSourceImage = new Image();
 let isLeftMouseDown = false;
 let isMiddleMouseDown = false;
-let eraserMode = false;
-let pos = {}; // helps with dragging
+let grabPosition = {}; // helps with dragging
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
+
+const MapModes = {
+    Draw: 0,
+    Eraser: 1,
+    Select: 2,
+    Suspend: 3
+}
+
+let mapMode = MapModes.Draw;
 
 let mapCursorPosition = [-1, -1];
 let lastSetTilePosition = [-1, -1];
+let selectCells = [];
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
-const cursorTileModeColor = "#30ff5d";
+const cursorSelectModeColor = "#f202fa";
+const cursorDrawModeColor = "#30ff5d";
 const cursorEraserModeColor = "#f44336";
-let mapCursorColor = cursorTileModeColor;
+let mapCursorColor = cursorDrawModeColor;
 
 //
 // Event Functions
@@ -50,7 +61,7 @@ let mapCursorColor = cursorTileModeColor;
 window.onkeydown = (event) => {
     switch (event.key) {
         case 'e':
-            toggleEraserMode();
+            changeMapMode(MapModes.Eraser);
             break;
         case 't':
             toggleMapSettingsModal(false);
@@ -60,10 +71,12 @@ window.onkeydown = (event) => {
             toggleTileSettingsModal(false);
             toggleMapSettingsModal(true);
             break;
+        case 'q':
+            changeMapMode(MapModes.Select);
+            break;
         case 's':
-            if (event.ctrlKey) {
+            if (event.ctrlKey)
                 callProjectSave();
-            }
             break;
         case 'Escape':
             toggleTileSettingsModal(false);
@@ -110,6 +123,9 @@ layerSelect.onchange = (event) => {
 mapCanvas.addEventListener("mouseup", (event) => {
     if (event.button === 0) {
         isLeftMouseDown = false;
+        if (mapMode === MapModes.Select) {
+            clearSelectModeCursor();
+        }
     }
     else if (event.button === 1) {
         mapCanvas.style.cursor = "auto";
@@ -123,7 +139,7 @@ mapCanvas.addEventListener("mouseleave", () => {
     allowDrawMapCursor = true;
     allowSetTile = true;
     lastSetTilePosition = [-1, -1];
-    clearCanvasCursor();
+    clearMapCursor();
     mapCanvas.style.cursor = 'auto';
 });
 
@@ -131,18 +147,19 @@ mapCanvas.addEventListener("mousedown", (event) => {
     if (event.button === 0) {
         isLeftMouseDown = true;
         let mouseCoords = getMouseCoordinatesOnMap(event);
-        if (allowSetTile) {
+        if (mapMode === MapModes.Select) {
+
+        }
+        else if (allowSetTile) {
             setTile(mouseCoords[0], mouseCoords[1]);
         }
     }
     else if (event.button === 1) {
         isMiddleMouseDown = true;
         mapCanvas.style.cursor = "grabbing";
-        pos = {
-            // The current scroll
-            left: mapCanvasWrapper.scrollLeft,
-            top: mapCanvasWrapper.scrollTop,
-            // Get the current mouse position
+        grabPosition = {
+            left: mapWrapper.scrollLeft,
+            top: mapWrapper.scrollTop,
             x: event.clientX,
             y: event.clientY,
         };
@@ -152,26 +169,64 @@ mapCanvas.addEventListener("mousedown", (event) => {
 mapCanvas.addEventListener("mousemove", (event) => {
     let mouseCoords = getMouseCoordinatesOnMap(event);
 
-    if (isLeftMouseDown && allowSetTile) {
+    if (mapMode === MapModes.Select && isLeftMouseDown) {
+        if (allowDrawMapCursor) {
+            console.log("Selecting!");
+            const startX = mapCursorPosition[0];
+            const startY = mapCursorPosition[1];
+            const mouseX = mouseCoords[0];
+            const mouseY = mouseCoords[1];
+
+            let rectStartX = Math.min(startX, mouseX);
+            let rectStartY = Math.min(startY, mouseY);
+            let maxX = Math.max(startX, mouseX);
+            let maxY = Math.max(startY, mouseY);
+            let rectWidth = maxX - rectStartX + project.tileSize;
+            let rectHeight = maxY - rectStartY + project.tileSize;
+
+            clearSelectModeCursor();
+            drawSelectModeCursor(rectStartX, rectStartY, rectWidth, rectHeight);
+
+            selectCells = [];
+
+            const cleanupHeight = rectStartY + rectHeight + project.tileSize;
+            const cleanupWidth = rectStartX + rectWidth + project.tileSize;
+            const cleanupY = rectStartY - project.tileSize;
+            const cleanupX = rectStartX - project.tileSize;
+
+            for (let j = cleanupY; j <= cleanupHeight; j += project.tileSize) {
+                for (let i = cleanupX; i <= cleanupWidth; i += project.tileSize) {
+                    selectCells.push({ x: i, y: j });
+                }
+            }
+        }
+    }
+    else if (isLeftMouseDown && allowSetTile) {
         setTile(mouseCoords[0], mouseCoords[1]);
     }
     else if (isMiddleMouseDown) {
         // How far the mouse has been moved
-        const dx = event.clientX - pos.x;
-        const dy = event.clientY - pos.y;
+        const dx = event.clientX - grabPosition.x;
+        const dy = event.clientY - grabPosition.y;
         // Scroll the element
-        mapCanvasWrapper.scrollTop = pos.top - dy;
-        mapCanvasWrapper.scrollLeft = pos.left - dx;
+        mapWrapper.scrollTop = grabPosition.top - dy;
+        mapWrapper.scrollLeft = grabPosition.left - dx;
     }
     else {
         if (allowDrawMapCursor) {
-            drawCanvasCursor(mouseCoords[0], mouseCoords[1]);
+            drawMapCursor(mouseCoords[0], mouseCoords[1]);
         }
     }
 });
 
+function clearSelectModeCursor() {
+    for (let i = 0; i < selectCells.length; i++) {
+        drawCell(selectCells[i].x, selectCells[i].y);
+    }
+}
+
 // Clear Canvas button click event
-clearCanvasButton.onclick = () => {
+clearMapButton.onclick = () => {
     clearMap();
 }
 
@@ -185,24 +240,49 @@ tileSetSourceImage.onload = () => {
 };
 
 eraserToolButton.onclick = () => {
-    toggleEraserMode();
+    changeMapMode(MapModes.Eraser);
 };
 
-function toggleEraserMode() {
-    eraserMode = !eraserMode;
+selectToolButton.onclick = () => {
+    changeMapMode(MapModes.Select);
+};
 
-    if (eraserMode) {
-        eraserToolButton.style.background = "#f39646";
-        mapCursorColor = cursorEraserModeColor;
-    }
-    else {
-        eraserToolButton.style.background = "#f9d339";
-        mapCursorColor = cursorTileModeColor;
+function changeMapMode(desiredMode, toggleBehavior = true) {
+
+    if (desiredMode === mapMode) {
+        if (toggleBehavior)
+            desiredMode = MapModes.Draw;
+        else
+            return;
     }
 
+    eraserToolButton.style.background = "#f9d339";
+    selectToolButton.style.background = "#f9d339";
+
+    switch (desiredMode) {
+        case MapModes.Draw:
+            mapMode = MapModes.Draw;
+            mapCursorColor = cursorDrawModeColor;
+            break;
+        case MapModes.Eraser:
+            mapMode = MapModes.Eraser;
+            eraserToolButton.style.background = "#f39646";
+            mapCursorColor = cursorEraserModeColor;
+            break;
+        case MapModes.Select:
+            mapMode = MapModes.Select;
+            selectToolButton.style.background = "#f39646";
+            mapCursorColor = cursorSelectModeColor;
+            break;
+        case MapModes.Suspend:
+            break;
+    }
+
+    clearSelectModeCursor();
+    selectCells = [];
     lastSetTilePosition = [-1, -1];
     allowSetTile = true;
-    drawCanvasCursor(mapCursorPosition[0], mapCursorPosition[1]);
+    drawMapCursor(mapCursorPosition[0], mapCursorPosition[1]);
 }
 
 // Tile Settings Modal
@@ -256,7 +336,7 @@ window.electronAPI.onSaveCompleted((_, value) => {
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
     setMapDimensions();
-    updateLayers();
+    updateTileLayers();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
 
@@ -271,7 +351,7 @@ window.electronAPI.loadNewProject((_, value) => {
     };
 
     setMapDimensions();
-    updateLayers();
+    updateTileLayers();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
 
@@ -279,7 +359,7 @@ window.electronAPI.loadNewProject((_, value) => {
 // Logic Functions
 //
 
-function clearCanvasCursor() {
+function clearMapCursor() {
     drawCell(mapCursorPosition[0], mapCursorPosition[1]);
     drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1]);
     drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1]);
@@ -291,20 +371,29 @@ function clearCanvasCursor() {
     drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1] + project.tileSize);
 }
 
-function drawCanvasCursor(mouseX, mouseY) {
-    clearCanvasCursor();
-    mapCursorPosition[0] = mouseX;
-    mapCursorPosition[1] = mouseY;
+function drawSelectModeCursor(x, y, w, h) {
     let ctx = mapCanvas.getContext("2d");
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.strokeStyle = mapCursorColor;
-    ctx.rect(mouseX, mouseY, project.tileSize, project.tileSize);
+    ctx.rect(x, y, w, h);
+    ctx.stroke();
+}
+
+function drawMapCursor(x, y) {
+    clearMapCursor();
+    mapCursorPosition[0] = x;
+    mapCursorPosition[1] = y;
+    let ctx = mapCanvas.getContext("2d");
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.strokeStyle = mapCursorColor;
+    ctx.rect(x, y, project.tileSize, project.tileSize);
     ctx.stroke();
 }
 
 // Updates the set layer dropdown
-function updateLayers() {
+function updateTileLayers() {
     for (let i = 0; i < project.layers.length; i++) {
         let opt = document.createElement('option');
         opt.value = project.layers[i].index;
@@ -339,14 +428,14 @@ function selectTile(x, y) {
 function setTile(mouseX, mouseY) {
     project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
-    if (!eraserMode) {
+    if (mapMode === MapModes.Draw) {
         project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
     }
 
     lastSetTilePosition = [mouseX, mouseY];
 
     drawCell(mouseX, mouseY);
-    drawCanvasCursor(mouseX, mouseY);
+    drawMapCursor(mouseX, mouseY);
 }
 
 // Utility for getting coordinates of mouse click
