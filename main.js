@@ -6,6 +6,7 @@ const isMac = process.platform === 'darwin'
 let landingWindow;
 let mainWindow;
 let projectFilePath = '';
+let projectName = '';
 let projectInitialized = false;
 
 function createLandingWindow() {
@@ -152,12 +153,13 @@ async function handleNewProject(newProjectData) {
     mainWindow.webContents.send('load-new-project', newProjectData);
   });
 
+  projectName = newProjectData.name;
   projectInitialized = true;
   landingWindow.close();
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 680);
+  landingWindow.setSize(800, 700);
   landingWindow.center();
 }
 
@@ -270,6 +272,7 @@ async function handleSaveProject(mainWindow) {
 
   if (!projectFilePath) {
     const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: projectName + ".ddes",
       filters: [{
         name: 'Dungeon Designer Project File',
         extensions: ['ddes']

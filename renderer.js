@@ -4,32 +4,32 @@ import { DisplayMessage, MessageType } from './modules/messaging.js';
 // Project Data
 //
 let project;
-let currentLayer = 0;
+let currentGraphicalTileLayer = 0;
 
 //
 // HTML Elements
 //
 let mapCanvas = document.getElementById("map-canvas");
 let mapWrapper = document.getElementById("canvas-wrapper");
-let clearMapButton = document.getElementById("clear-canvas-button");
+let clearLayerButton = document.getElementById("clear-layer-btn");
 let importTilesetButton = document.getElementById("open-file-button");
 let tilesetContainer = document.getElementById("tileset-container");
-let layerSelect = document.getElementById("layer-select");
+let graphicalLayerSelect = document.getElementById("layer-select");
 let tileSettingsButton = document.getElementById("btn-tile-settings");
 let mapSettingsButton = document.getElementById("btn-map-settings");
 let tileSettingsModal = document.getElementById("tile-settings-modal");
 let mapSettingsModal = document.getElementById("map-settings-modal");
-let closeTileSettingsCornerButton = document.getElementById("close-tile-settings-corner-button");
-let closeMapSettingsCornerButton = document.getElementById("close-map-settings-corner-button");
 let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
 let brushToolButton = document.getElementById('brush-tool-btn');
+let collisionToolButton = document.getElementById('collision-tool-btn');
 let saveButton = document.getElementById('save-btn');
 
 //
 // Function Variables
 //
 let tileSetSourceImage = new Image();
+let collisionTileImage = new Image();
 let isLeftMouseDown = false;
 let isMiddleMouseDown = false;
 let grabPosition = {}; // helps with dragging
@@ -39,7 +39,8 @@ const MapModes = {
     Brush: 0,
     Eraser: 1,
     Select: 2,
-    Suspend: 3
+    Suspend: 3,
+    Collision: 4
 }
 
 let mapMode = MapModes.Brush;
@@ -52,10 +53,11 @@ let allowSetTile = true;
 
 const toolButtonPressedColor = "#f39646";
 const toolButtonNormalColor = "#f9d339";
-const maxSelectSize = 128;
+const maxSelectSize = 256;
 const cursorSelectModeTooLargeColor = "#ff1100";
 const cursorSelectModeColor = "#f202fa";
 const cursorDrawModeColor = "#30ff5d";
+const cursorCollisionModeColor = "#00ffff";
 const cursorEraserModeColor = "#ff8400";
 let mapCursorColor = cursorDrawModeColor;
 
@@ -65,11 +67,15 @@ let mapCursorColor = cursorDrawModeColor;
 
 window.onload = (_) => {
     brushToolButton.style.background = toolButtonPressedColor;
+    collisionTileImage.src = './Assets/collision_tile.png';
 }
 
 window.onkeydown = (event) => {
     if (!event.repeat) {
         switch (event.key) {
+            case 'c':
+                changeMapMode(MapModes.Collision);
+                break;
             case 'b':
                 changeMapMode(MapModes.Brush);
                 break;
@@ -99,6 +105,14 @@ window.onkeydown = (event) => {
     }
 }
 
+brushToolButton.onclick = () => {
+    changeMapMode(MapModes.Brush);
+}
+
+collisionToolButton.onclick = () => {
+    changeMapMode(MapModes.Collision);
+}
+
 saveButton.onclick = async () => {
     await callProjectSave();
 }
@@ -122,15 +136,16 @@ importTilesetButton.addEventListener('click', async () => {
     const filePath = await window.electronAPI.openFile();
 
     if (filePath) {
-        clearMap();
+        clearMapLayer();
         clearTileSet();
         tileSetSourceImage.src = filePath;
     }
 });
 
 // Layer dropdown selection event.
-layerSelect.onchange = (event) => {
-    setLayer(layerSelect.value);
+graphicalLayerSelect.onchange = (event) => {
+    console.log(graphicalLayerSelect.value);
+    setGraphicalTileLayer(graphicalLayerSelect.value);
 };
 
 //Bind mouse events for painting (or removing) tiles on click/drag
@@ -179,6 +194,16 @@ mapCanvas.addEventListener("mousedown", (event) => {
             x: event.clientX,
             y: event.clientY,
         };
+    }
+    else if (event.button === 2) {
+        if (mapMode === MapModes.Collision) {
+            let mouseCoords = getMouseCoordinatesOnMap(event);
+            removeCollisionTile(mouseCoords[0], mouseCoords[1]);
+            drawCell(mouseCoords[0], mouseCoords[1]);
+            drawMapCursor(mouseCoords[0], mouseCoords[1]);
+            allowSetTile = true;
+            lastSetTilePosition = [-1, -1];
+        }
     }
 });
 
@@ -252,8 +277,8 @@ function clearSelectModeCursor() {
 }
 
 // Clear Canvas button click event
-clearMapButton.onclick = () => {
-    clearMap();
+clearLayerButton.onclick = () => {
+    clearMapLayer();
 }
 
 // Tileset source image loaded event
@@ -262,6 +287,7 @@ tileSetSourceImage.onload = () => {
     // This timeout is for a load timing issue.
     setTimeout(() => {
         drawMap();
+        selectTile(0, 0);
     }, 100);
 };
 
@@ -282,11 +308,23 @@ function changeMapMode(desiredMode, toggleBehavior = true) {
             return;
     }
 
+    collisionToolButton.style.background = toolButtonNormalColor;
     eraserToolButton.style.background = toolButtonNormalColor;
     selectToolButton.style.background = toolButtonNormalColor;
     brushToolButton.style.background = toolButtonNormalColor;
 
+    if (mapMode === MapModes.Collision) {
+        // Removes collision tiles from the map.
+        drawMap();
+    }
+
     switch (desiredMode) {
+        case MapModes.Collision:
+            drawCollisionTiles();
+            mapMode = MapModes.Collision;
+            collisionToolButton.style.background = toolButtonPressedColor;
+            mapCursorColor = cursorCollisionModeColor;
+            break;
         case MapModes.Brush:
             mapMode = MapModes.Brush;
             brushToolButton.style.background = toolButtonPressedColor;
@@ -318,10 +356,6 @@ tileSettingsButton.onclick = () => {
     toggleTileSettingsModal(true);
 };
 
-closeTileSettingsCornerButton.onclick = () => {
-    toggleTileSettingsModal(false);
-};
-
 function toggleTileSettingsModal(toggleMode) {
     if (toggleMode)
         tileSettingsModal.style.display = "block";
@@ -332,10 +366,6 @@ function toggleTileSettingsModal(toggleMode) {
 // Map Settings Modal
 mapSettingsButton.onclick = () => {
     toggleMapSettingsModal(true);
-};
-
-closeMapSettingsCornerButton.onclick = () => {
-    toggleMapSettingsModal(false);
 };
 
 function toggleMapSettingsModal(toggleMode) {
@@ -364,7 +394,7 @@ window.electronAPI.onSaveCompleted((_, value) => {
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
     setMapDimensions();
-    updateTileLayers();
+    updateGraphicalTileLayers();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
 
@@ -374,12 +404,13 @@ window.electronAPI.loadNewProject((_, value) => {
         tileSize: value.tileSize,
         mapWidth: value.mapWidth,
         mapHeight: value.mapHeight,
-        layers: [{ name: value.layerName, index: 0, values: [] }],
+        graphicalTileLayers: [{ name: value.layerNames[0], index: 0, values: [] }, { name: value.layerNames[1], index: 1, values: [] }],
+        collisionTiles: [],
         tilesetImagePath: value.tilesetImagePath
     };
 
     setMapDimensions();
-    updateTileLayers();
+    updateGraphicalTileLayers();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
 
@@ -421,12 +452,12 @@ function drawMapCursor(x, y) {
 }
 
 // Updates the set layer dropdown
-function updateTileLayers() {
-    for (let i = 0; i < project.layers.length; i++) {
+function updateGraphicalTileLayers() {
+    for (let i = 0; i < project.graphicalTileLayers.length; i++) {
         let opt = document.createElement('option');
-        opt.value = project.layers[i].index;
-        opt.innerHTML = project.layers[i].name;
-        layerSelect.appendChild(opt);
+        opt.value = project.graphicalTileLayers[i].index;
+        opt.innerHTML = project.graphicalTileLayers[i].name;
+        graphicalLayerSelect.appendChild(opt);
     }
 }
 
@@ -454,16 +485,28 @@ function selectTile(x, y) {
 
 // Handler for placing new tiles on the map
 function setTile(mouseX, mouseY) {
-    project.layers[currentLayer].values = project.layers[currentLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
+    if (mapMode === MapModes.Brush || mapMode === MapModes.Eraser) {
+        project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
-    if (mapMode === MapModes.Brush) {
-        project.layers[currentLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
+        if (mapMode === MapModes.Brush) {
+            project.graphicalTileLayers[currentGraphicalTileLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
+        }
+    }
+
+    if (mapMode === MapModes.Collision) {
+        removeCollisionTile(mouseX, mouseY);
+        console.log("setting collision tile");
+        project.collisionTiles.push({ X: mouseX, Y: mouseY });
     }
 
     lastSetTilePosition = [mouseX, mouseY];
 
     drawCell(mouseX, mouseY);
     drawMapCursor(mouseX, mouseY);
+}
+
+function removeCollisionTile(mouseX, mouseY) {
+    project.collisionTiles = project.collisionTiles.filter(val => val.X !== mouseX || val.Y !== mouseY);
 }
 
 // Utility for getting coordinates of mouse click
@@ -489,9 +532,9 @@ function getMouseCoordinatesOnMap(e) {
     return [mouseX, mouseY];
 }
 
-// Sets the current layer
-function setLayer(newLayer) {
-    currentLayer = newLayer;
+// Sets the current graphical tile layer
+function setGraphicalTileLayer(newLayer) {
+    currentGraphicalTileLayer = newLayer;
 }
 
 // Draws a cell on the map using the layer data for that position
@@ -499,8 +542,8 @@ function drawCell(x, y) {
     let ctx = mapCanvas.getContext("2d");
     ctx.clearRect(x, y, project.tileSize, project.tileSize);
 
-    for (let i = 0; i < project.layers.length; i++) {
-        let cell = project.layers[i].values.filter(val => val.X == x && val.Y == y)[0];
+    for (let i = 0; i < project.graphicalTileLayers.length; i++) {
+        let cell = project.graphicalTileLayers[i].values.filter(val => val.X == x && val.Y == y)[0];
 
         if (cell) {
             ctx.drawImage(
@@ -516,6 +559,24 @@ function drawCell(x, y) {
             );
         }
     }
+
+    if (mapMode == MapModes.Collision) {
+        let cell = project.collisionTiles.filter(val => val.X == x && val.Y == y)[0];
+
+        if (cell) {
+            ctx.drawImage(
+                collisionTileImage,
+                0,
+                0,
+                64,
+                64,
+                cell.X,
+                cell.Y,
+                project.tileSize,
+                project.tileSize
+            );
+        }
+    }
 }
 
 // Draws the main canvas given the layers of the current section
@@ -523,9 +584,9 @@ function drawMap() {
     let ctx = mapCanvas.getContext("2d");
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
-    for (let i = 0; i < project.layers.length; i++) {
-        for (let j = 0; j < project.layers[i].values.length; j++) {
-            let cell = project.layers[i].values[j];
+    for (let i = 0; i < project.graphicalTileLayers.length; i++) {
+        for (let j = 0; j < project.graphicalTileLayers[i].values.length; j++) {
+            let cell = project.graphicalTileLayers[i].values[j];
 
             ctx.drawImage(
                 tileSetSourceImage,
@@ -542,9 +603,31 @@ function drawMap() {
     }
 }
 
+function drawCollisionTiles() {
+    let ctx = mapCanvas.getContext("2d");
+
+    for (let i = 0; i < project.collisionTiles.length; i++) {
+        let cell = project.collisionTiles[i];
+
+        if (cell) {
+            ctx.drawImage(
+                collisionTileImage,
+                0,
+                0,
+                64,
+                64,
+                cell.X,
+                cell.Y,
+                project.tileSize,
+                project.tileSize
+            );
+        }
+    }
+}
+
 // Reset state to empty
-function clearMap() {
-    project.layers.forEach(l => l.values = []);
+function clearMapLayer() {
+    project.graphicalTileLayers[currentGraphicalTileLayer].values = [];
     drawMap();
 }
 

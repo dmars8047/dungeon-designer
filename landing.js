@@ -16,6 +16,7 @@ let importTilesetButton = document.getElementById('import-tileset-button');
 let mapDimensionsWidthInput = document.getElementById('map-dimensions-width-input');
 let mapDimensionsHeightInput = document.getElementById('map-dimensions-height-input');
 let layerNameInput = document.getElementById("layer-1-name-input");
+let layer2NameInput = document.getElementById("layer-2-name-input");
 
 importTilesetButton.addEventListener('click', async () => {
     let pathToTilset = await window.electronAPI.openFile();
@@ -44,7 +45,7 @@ createNewProjectButton.addEventListener('click', async () => {
         var creationRequest = {
             name: projectNameInput.value,
             tileSize: parseInt(tileSizeSelect.value),
-            layerName: layerNameInput.value,
+            layerNames: [layerNameInput.value, layer2NameInput.value],
             tilesetImagePath: tilesetFileInput.value,
             mapWidth: mapDimensionsWidthInput.value,
             mapHeight: mapDimensionsHeightInput.value
@@ -116,7 +117,7 @@ function projectCreateFormIsValid() {
 
     if (!layerNameInput.value) {
         if (!errorMessageText) {
-            errorMessageText = 'A name is required for the initial tileset layer.';
+            errorMessageText = 'A name is required for layer 1.';
         }
 
         layerNameInput.style.backgroundColor = '#ffc8c4';
@@ -124,6 +125,18 @@ function projectCreateFormIsValid() {
     }
     else {
         layerNameInput.style.backgroundColor = '#fff';
+    }
+
+    if (!layer2NameInput.value) {
+        if (!errorMessageText) {
+            errorMessageText = 'A name is required for layer 2.';
+        }
+
+        layer2NameInput.style.backgroundColor = '#ffc8c4';
+        isValid = false;
+    }
+    else {
+        layer2NameInput.style.backgroundColor = '#fff';
     }
 
     if (!isValid) {
