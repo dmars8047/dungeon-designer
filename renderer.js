@@ -1,4 +1,5 @@
 import { DisplayMessage, MessageType } from './modules/messaging.js';
+import { FillFlood } from './modules/fillflood.js'
 
 //
 // Project Data
@@ -23,6 +24,7 @@ let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
 let brushToolButton = document.getElementById('brush-tool-btn');
 let collisionToolButton = document.getElementById('collision-tool-btn');
+let fillToolButton = document.getElementById('fill-tool-btn');
 let saveButton = document.getElementById('save-btn');
 
 //
@@ -40,7 +42,8 @@ const MapModes = {
     Eraser: 1,
     Select: 2,
     Suspend: 3,
-    Collision: 4
+    Collision: 4,
+    Fill: 5
 }
 
 let mapMode = MapModes.Brush;
@@ -59,6 +62,7 @@ const cursorSelectModeColor = "#f202fa";
 const cursorDrawModeColor = "#30ff5d";
 const cursorCollisionModeColor = "#00ffff";
 const cursorEraserModeColor = "#ff8400";
+const cursorFillModeColor = "#6176ff";
 let mapCursorColor = cursorDrawModeColor;
 
 //
@@ -73,6 +77,9 @@ window.onload = (_) => {
 window.onkeydown = (event) => {
     if (!event.repeat) {
         switch (event.key) {
+            case 'g':
+                changeMapMode(MapModes.Fill);
+                break;
             case 'c':
                 changeMapMode(MapModes.Collision);
                 break;
@@ -181,6 +188,14 @@ mapCanvas.addEventListener("mousedown", (event) => {
         if (mapMode === MapModes.Select) {
             mapCursorColor = cursorSelectModeColor;
         }
+        else if (mapMode === MapModes.Fill) {
+            let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1])[0];
+            if (targetTile) {
+                targetTile = { X: targetTile.TilesheetX, Y: targetTile.TilesheetY };
+            }
+            FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile[0], selectedTile[1], mapCanvas.width, mapCanvas.height, targetTile);
+            drawMap();
+        }
         else if (allowSetTile) {
             setTile(mouseCoords[0], mouseCoords[1]);
         }
@@ -215,7 +230,7 @@ mapCanvas.addEventListener("mousemove", (event) => {
             drawSelectionArea(mouseCoords);
         }
     }
-    else if (isLeftMouseDown && allowSetTile) {
+    else if (isLeftMouseDown && allowSetTile && mapMode !== MapModes.Fill) {
         setTile(mouseCoords[0], mouseCoords[1]);
     }
     else if (isMiddleMouseDown) {
@@ -312,6 +327,7 @@ function changeMapMode(desiredMode, toggleBehavior = true) {
     eraserToolButton.style.background = toolButtonNormalColor;
     selectToolButton.style.background = toolButtonNormalColor;
     brushToolButton.style.background = toolButtonNormalColor;
+    fillToolButton.style.background = toolButtonNormalColor;
 
     if (mapMode === MapModes.Collision) {
         // Removes collision tiles from the map.
@@ -319,6 +335,11 @@ function changeMapMode(desiredMode, toggleBehavior = true) {
     }
 
     switch (desiredMode) {
+        case MapModes.Fill:
+            mapMode = MapModes.Fill;
+            fillToolButton.style.background = toolButtonPressedColor;
+            mapCursorColor = cursorFillModeColor;
+            break;
         case MapModes.Collision:
             drawCollisionTiles();
             mapMode = MapModes.Collision;
