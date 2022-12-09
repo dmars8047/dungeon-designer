@@ -159,7 +159,7 @@ async function handleNewProject(newProjectData) {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 700);
+  landingWindow.setSize(800, 720);
   landingWindow.center();
 }
 
