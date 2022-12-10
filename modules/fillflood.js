@@ -5,6 +5,11 @@ export function FillFlood(x, y, layerNodes, tileSize, tileSheetX, tileSheetY, ma
         return;
     }
 
+    if (layerNodes.length === 0) {
+        JustFillIt(layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight);
+        return;
+    }
+
     let stack = [];
 
     stack.push({ X: x, Y: y });
@@ -26,6 +31,15 @@ export function FillFlood(x, y, layerNodes, tileSize, tileSheetX, tileSheetY, ma
     }
 
     return;
+}
+
+function JustFillIt(layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight) {
+    console.log("just fill it!");
+    for (let i = 0; i < mapHeight; i += tileSize) {
+        for (let j = 0; j < mapWidth; j += tileSize) {
+            Set(j, i, layerNodes, tileSheetX, tileSheetY, null);
+        }
+    }
 }
 
 function Scan(lx, rx, y, stack, tileSize, layerNodes, mapWidth, mapHeight, targetTile) {
