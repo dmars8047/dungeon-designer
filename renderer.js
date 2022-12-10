@@ -62,6 +62,7 @@ const cursorDrawModeColor = "#30ff5d";
 const cursorCollisionModeColor = "#00ffff";
 const cursorEraserModeColor = "#ff8400";
 const cursorFillModeColor = "#6176ff";
+const defaultMapBackgroundColor = "#f4f8f9";
 let mapCursorColor = cursorDrawModeColor;
 
 //
@@ -74,7 +75,7 @@ window.onload = (_) => {
 }
 
 window.onkeydown = (event) => {
-    if (!event.repeat) {
+    if (!event.repeat && mapMode !== MapModes.Suspend) {
         switch (event.key) {
             case 'g':
                 changeMapMode(MapModes.Fill);
@@ -139,93 +140,106 @@ graphicalLayerSelect.onkeydown = (event) => {
 
 //Bind mouse events for painting (or removing) tiles on click/drag
 mapCanvas.addEventListener("mouseup", (event) => {
-    if (event.button === 0) {
-        isLeftMouseDown = false;
-        if (mapMode === MapModes.Select) {
-            clearSelectModeCursor();
-            let mouseCoords = getMouseCoordinatesOnMap(event);
-            drawMapCursor(mouseCoords[0], mouseCoords[1]);
+    if (mapMode !== MapModes.Suspend) {
+        if (event.button === 0) {
+            isLeftMouseDown = false;
+            if (mapMode === MapModes.Select) {
+                clearSelectModeCursor();
+                let mouseCoords = getMouseCoordinatesOnMap(event);
+                drawMapCursor(mouseCoords[0], mouseCoords[1]);
+            }
         }
-    }
-    else if (event.button === 1) {
-        mapCanvas.style.cursor = "auto";
-        isMiddleMouseDown = false;
+        else if (event.button === 1) {
+            mapCanvas.style.cursor = "none";
+            isMiddleMouseDown = false;
+        }
     }
 });
 
 mapCanvas.addEventListener("mouseleave", () => {
-    isLeftMouseDown = false;
-    isMiddleMouseDown = false;
-    allowDrawMapCursor = true;
-    allowSetTile = true;
-    lastSetTilePosition = [-1, -1];
-    clearMapCursor();
-    mapCanvas.style.cursor = 'auto';
+    if (mapMode !== MapModes.Suspend) {
+        isLeftMouseDown = false;
+        isMiddleMouseDown = false;
+        allowDrawMapCursor = true;
+        allowSetTile = true;
+        lastSetTilePosition = [-1, -1];
+        clearMapCursor();
+        mapCanvas.style.cursor = 'none';
+    }
 });
 
 mapCanvas.addEventListener("mousedown", (event) => {
-    if (event.button === 0) {
-        isLeftMouseDown = true;
-        let mouseCoords = getMouseCoordinatesOnMap(event);
-        if (mapMode === MapModes.Select) {
-            mapCursorColor = cursorSelectModeColor;
-        }
-        else if (mapMode === MapModes.Fill) {
-            let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1])[0];
-            if (targetTile) {
-                targetTile = { X: targetTile.TilesheetX, Y: targetTile.TilesheetY };
-            }
-            FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile[0], selectedTile[1], mapCanvas.width, mapCanvas.height, targetTile);
-            drawMap();
-        }
-        else if (allowSetTile) {
-            setTile(mouseCoords[0], mouseCoords[1]);
-        }
-    }
-    else if (event.button === 1) {
-        isMiddleMouseDown = true;
-        mapCanvas.style.cursor = "grabbing";
-        grabPosition = {
-            left: mapWrapper.scrollLeft,
-            top: mapWrapper.scrollTop,
-            x: event.clientX,
-            y: event.clientY,
-        };
-    }
-    else if (event.button === 2) {
-        if (mapMode === MapModes.Collision) {
+    if (mapMode !== MapModes.Suspend) {
+        if (event.button === 0) {
+            isLeftMouseDown = true;
             let mouseCoords = getMouseCoordinatesOnMap(event);
-            removeCollisionTile(mouseCoords[0], mouseCoords[1]);
-            drawCell(mouseCoords[0], mouseCoords[1]);
-            drawMapCursor(mouseCoords[0], mouseCoords[1]);
-            allowSetTile = true;
-            lastSetTilePosition = [-1, -1];
+            if (mapMode === MapModes.Select) {
+                mapCursorColor = cursorSelectModeColor;
+            }
+            else if (mapMode === MapModes.Fill) {
+                let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1])[0];
+                if (targetTile) {
+                    targetTile = { X: targetTile.TilesheetX, Y: targetTile.TilesheetY };
+                    // Make sure the user is not targeting the same tile they have selected.
+                    if (targetTile.X === selectedTile[0] && targetTile.Y === selectedTile[1]) {
+                        return;
+                    }
+                }
+                FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile[0], selectedTile[1], mapCanvas.width, mapCanvas.height, targetTile);
+                drawMap();
+            }
+            else if (allowSetTile) {
+                setTile(mouseCoords[0], mouseCoords[1]);
+            }
+        }
+        else if (event.button === 1) {
+            isMiddleMouseDown = true;
+            mapCanvas.style.cursor = "grabbing";
+            grabPosition = {
+                left: mapWrapper.scrollLeft,
+                top: mapWrapper.scrollTop,
+                x: event.clientX,
+                y: event.clientY,
+            };
+        }
+        else if (event.button === 2) {
+            if (mapMode === MapModes.Collision) {
+                let mouseCoords = getMouseCoordinatesOnMap(event);
+                removeCollisionTile(mouseCoords[0], mouseCoords[1]);
+                drawCell(mouseCoords[0], mouseCoords[1]);
+                drawMapCursor(mouseCoords[0], mouseCoords[1]);
+                allowSetTile = true;
+                lastSetTilePosition = [-1, -1];
+            }
         }
     }
 });
 
 mapCanvas.addEventListener("mousemove", (event) => {
-    let mouseCoords = getMouseCoordinatesOnMap(event);
+    if (mapMode !== MapModes.Suspend) {
 
-    if (mapMode === MapModes.Select && isLeftMouseDown) {
-        if (allowDrawMapCursor) {
-            drawSelectionArea(mouseCoords);
+        let mouseCoords = getMouseCoordinatesOnMap(event);
+
+        if (mapMode === MapModes.Select && isLeftMouseDown) {
+            if (allowDrawMapCursor) {
+                drawSelectionArea(mouseCoords);
+            }
         }
-    }
-    else if (isLeftMouseDown && allowSetTile && mapMode !== MapModes.Fill) {
-        setTile(mouseCoords[0], mouseCoords[1]);
-    }
-    else if (isMiddleMouseDown) {
-        // How far the mouse has been moved
-        const dx = event.clientX - grabPosition.x;
-        const dy = event.clientY - grabPosition.y;
-        // Scroll the element
-        mapWrapper.scrollTop = grabPosition.top - dy;
-        mapWrapper.scrollLeft = grabPosition.left - dx;
-    }
-    else {
-        if (allowDrawMapCursor) {
-            drawMapCursor(mouseCoords[0], mouseCoords[1]);
+        else if (isLeftMouseDown && allowSetTile && mapMode !== MapModes.Fill) {
+            setTile(mouseCoords[0], mouseCoords[1]);
+        }
+        else if (isMiddleMouseDown) {
+            // How far the mouse has been moved
+            const dx = event.clientX - grabPosition.x;
+            const dy = event.clientY - grabPosition.y;
+            // Scroll the element
+            mapWrapper.scrollTop = grabPosition.top - dy;
+            mapWrapper.scrollLeft = grabPosition.left - dx;
+        }
+        else {
+            if (allowDrawMapCursor) {
+                drawMapCursor(mouseCoords[0], mouseCoords[1]);
+            }
         }
     }
 });
@@ -267,11 +281,13 @@ function drawSelectionArea(mouseCoords) {
     }
 }
 
-function clearSelectModeCursor() {
-    for (let i = 0; i < selectCells.length; i++) {
-        drawCell(selectCells[i].x, selectCells[i].y);
-    }
-}
+eraserToolButton.onclick = () => {
+    changeMapMode(MapModes.Eraser);
+};
+
+selectToolButton.onclick = () => {
+    changeMapMode(MapModes.Select);
+};
 
 // Clear Canvas button click event
 clearLayerButton.onclick = () => {
@@ -288,13 +304,12 @@ tileSetSourceImage.onload = () => {
     }, 100);
 };
 
-eraserToolButton.onclick = () => {
-    changeMapMode(MapModes.Eraser);
-};
 
-selectToolButton.onclick = () => {
-    changeMapMode(MapModes.Select);
-};
+function clearSelectModeCursor() {
+    for (let i = 0; i < selectCells.length; i++) {
+        drawCell(selectCells[i].x, selectCells[i].y);
+    }
+}
 
 function changeMapMode(desiredMode, toggleBehavior = false) {
 
@@ -344,6 +359,7 @@ function changeMapMode(desiredMode, toggleBehavior = false) {
             mapCursorColor = cursorSelectModeColor;
             break;
         case MapModes.Suspend:
+            mapMode = MapModes.Suspend;
             break;
     }
 
@@ -359,11 +375,15 @@ projectSettingsButton.onclick = () => {
     toggleProjectSettingsModal(true);
 };
 
-function toggleProjectSettingsModal(toggleMode) {
-    if (toggleMode)
+function toggleProjectSettingsModal(on) {
+    if (on) {
         projectSettingsModal.style.display = "block";
-    else
+        changeMapMode(MapModes.Suspend);
+    }
+    else {
         projectSettingsModal.style.display = "none";
+        changeMapMode(MapModes.Brush);
+    }
 }
 
 //
@@ -385,6 +405,7 @@ window.electronAPI.onSaveCompleted((_, value) => {
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
     applyMapDimensions();
+    applyMapBackgroundColor();
     updateGraphicalTileLayers();
     setProjectSettingsForm();
     tileSetSourceImage.src = project.tilesetImagePath;
@@ -398,10 +419,12 @@ window.electronAPI.loadNewProject((_, value) => {
         mapHeight: value.mapHeight,
         graphicalTileLayers: [{ name: value.layerNames[0], index: 0, values: [] }, { name: value.layerNames[1], index: 1, values: [] }],
         collisionTiles: [],
-        tilesetImagePath: value.tilesetImagePath
+        tilesetImagePath: value.tilesetImagePath,
+        backgroundColor: defaultMapBackgroundColor
     };
 
     applyMapDimensions();
+    applyMapBackgroundColor();
     updateGraphicalTileLayers();
     setProjectSettingsForm();
     tileSetSourceImage.src = project.tilesetImagePath;
@@ -411,24 +434,30 @@ function setProjectSettingsForm() {
     let projectNameInput = document.getElementById('project-name-input');
     let projectWidthInput = document.getElementById('map-dimensions-width-input');
     let projectHeightInput = document.getElementById('map-dimensions-height-input');
+    let mapBackgroundColorInput = document.getElementById('map-background-color-input');
 
     projectNameInput.value = project.name;
     projectWidthInput.value = project.mapWidth;
     projectHeightInput.value = project.mapHeight;
+    mapBackgroundColorInput.value = project.backgroundColor;
 }
 
 projectSettingsApplyButton.onclick = async () => {
     let projectNameInput = document.getElementById('project-name-input');
     let projectWidthInput = document.getElementById('map-dimensions-width-input');
     let projectHeightInput = document.getElementById('map-dimensions-height-input');
+    let mapBackgroundColorInput = document.getElementById('map-background-color-input');
 
     project.name = projectNameInput.value;
     project.mapWidth = projectWidthInput.value;
     project.mapHeight = projectHeightInput.value;
+    project.backgroundColor = mapBackgroundColorInput.value;
     await window.electronAPI.updateProjectName(project.name);
     applyMapDimensions();
+    applyMapBackgroundColor();
     setTimeout(() => {
         drawMap();
+        toggleProjectSettingsModal(false);
     }, 50);
 }
 
@@ -489,6 +518,10 @@ function applyMapDimensions() {
 
     mapCanvas.width = project.mapWidth;
     mapCanvas.height = project.mapHeight;
+}
+
+function applyMapBackgroundColor() {
+    mapCanvas.style.background = project.backgroundColor;
 }
 
 // Sets the selected tileset
