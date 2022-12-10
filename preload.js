@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadNewProject: (callback) => ipcRenderer.on('load-new-project', callback),
   onSaveCompleted: (callback) =>  ipcRenderer.on('save-project-completed', callback),
   createNewProject: (value) => ipcRenderer.send('project:newProject', value),
+  updateProjectName: (value) => ipcRenderer.send('project:updateName', value),
   openProject: () => ipcRenderer.invoke('project:openProject'),
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   expandWindowForProjectCreation: () => ipcRenderer.invoke('project:projectCreationWindowEntered'),

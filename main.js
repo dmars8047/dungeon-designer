@@ -114,6 +114,7 @@ app.whenReady().then(() => {
   ipcMain.handle('project:projectCreationWindowEntered', handleNewProjectCreationScreenEntered);
   ipcMain.handle('project:projectCreationWindowExited', handleNewProjectCreationScreenExited);
   ipcMain.on('project:newProject', (_event, value) => { handleNewProject(value); });
+  ipcMain.on('project:updateName', (_event, value) => { handleNewProjectName(value) });
   ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); });
 
   createLandingWindow();
@@ -153,7 +154,7 @@ async function handleNewProject(newProjectData) {
     mainWindow.webContents.send('load-new-project', newProjectData);
   });
 
-  projectName = newProjectData.name;
+  projectName = newProjectData.name.replace(" ", "_");
   projectInitialized = true;
   landingWindow.close();
 }
@@ -303,4 +304,8 @@ async function saveProjectFile(payload) {
   });
 
   mainWindow.webContents.send('save-project-completed', { message: "Project file saved successfully. Project file path: " + projectFilePath, success: true });
+}
+
+async function handleNewProjectName(val) {
+  projectName = val.replace(" ", "_");
 }

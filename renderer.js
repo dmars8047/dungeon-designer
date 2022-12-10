@@ -13,19 +13,17 @@ let currentGraphicalTileLayer = 0;
 let mapCanvas = document.getElementById("map-canvas");
 let mapWrapper = document.getElementById("canvas-wrapper");
 let clearLayerButton = document.getElementById("clear-layer-btn");
-let importTilesetButton = document.getElementById("open-file-button");
 let tilesetContainer = document.getElementById("tileset-container");
 let graphicalLayerSelect = document.getElementById("layer-select");
-let tileSettingsButton = document.getElementById("btn-tile-settings");
-let mapSettingsButton = document.getElementById("btn-map-settings");
-let tileSettingsModal = document.getElementById("tile-settings-modal");
-let mapSettingsModal = document.getElementById("map-settings-modal");
+let projectSettingsButton = document.getElementById("btn-map-settings");
+let projectSettingsModal = document.getElementById("project-settings-modal");
 let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
 let brushToolButton = document.getElementById('brush-tool-btn');
 let collisionToolButton = document.getElementById('collision-tool-btn');
 let fillToolButton = document.getElementById('fill-tool-btn');
 let saveButton = document.getElementById('save-btn');
+let projectSettingsApplyButton = document.getElementById('project-settings-apply-button');
 
 //
 // Function Variables
@@ -54,6 +52,7 @@ let selectCells = [];
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
+const collisionTileSize = 64;
 const toolButtonPressedColor = "#f39646";
 const toolButtonNormalColor = "#f9d339";
 const maxSelectSize = 256;
@@ -89,13 +88,8 @@ window.onkeydown = (event) => {
             case 'e':
                 changeMapMode(MapModes.Eraser);
                 break;
-            case 't':
-                toggleMapSettingsModal(false);
-                toggleTileSettingsModal(true);
-                break;
-            case 'm':
-                toggleTileSettingsModal(false);
-                toggleMapSettingsModal(true);
+            case 'p':
+                toggleProjectSettingsModal(true);
                 break;
             case 'q':
                 changeMapMode(MapModes.Select);
@@ -105,8 +99,7 @@ window.onkeydown = (event) => {
                     callProjectSave();
                 break;
             case 'Escape':
-                toggleTileSettingsModal(false);
-                toggleMapSettingsModal(false);
+                toggleProjectSettingsModal(false);
                 break;
         }
     }
@@ -130,30 +123,19 @@ async function callProjectSave() {
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
-    if (event.target == tileSettingsModal) {
-        toggleTileSettingsModal(false);
-    }
-    else if (event.target == mapSettingsModal) {
-        toggleMapSettingsModal(false);
+    if (event.target == projectSettingsModal) {
+        toggleProjectSettingsModal(false);
     }
 }
 
-// Import Tilset button click event
-importTilesetButton.addEventListener('click', async () => {
-    const filePath = await window.electronAPI.openFile();
-
-    if (filePath) {
-        clearMapLayer();
-        clearTileSet();
-        tileSetSourceImage.src = filePath;
-    }
-});
-
 // Layer dropdown selection event.
-graphicalLayerSelect.onchange = (event) => {
-    console.log(graphicalLayerSelect.value);
+graphicalLayerSelect.onchange = (_) => {
     setGraphicalTileLayer(graphicalLayerSelect.value);
 };
+
+graphicalLayerSelect.onkeydown = (event) => {
+    event.preventDefault();
+}
 
 //Bind mouse events for painting (or removing) tiles on click/drag
 mapCanvas.addEventListener("mouseup", (event) => {
@@ -314,7 +296,7 @@ selectToolButton.onclick = () => {
     changeMapMode(MapModes.Select);
 };
 
-function changeMapMode(desiredMode, toggleBehavior = true) {
+function changeMapMode(desiredMode, toggleBehavior = false) {
 
     if (desiredMode === mapMode) {
         if (toggleBehavior)
@@ -372,28 +354,16 @@ function changeMapMode(desiredMode, toggleBehavior = true) {
     drawMapCursor(mapCursorPosition[0], mapCursorPosition[1]);
 }
 
-// Tile Settings Modal
-tileSettingsButton.onclick = () => {
-    toggleTileSettingsModal(true);
+// Project Settings Modal
+projectSettingsButton.onclick = () => {
+    toggleProjectSettingsModal(true);
 };
 
-function toggleTileSettingsModal(toggleMode) {
+function toggleProjectSettingsModal(toggleMode) {
     if (toggleMode)
-        tileSettingsModal.style.display = "block";
+        projectSettingsModal.style.display = "block";
     else
-        tileSettingsModal.style.display = "none";
-}
-
-// Map Settings Modal
-mapSettingsButton.onclick = () => {
-    toggleMapSettingsModal(true);
-};
-
-function toggleMapSettingsModal(toggleMode) {
-    if (toggleMode)
-        mapSettingsModal.style.display = "block";
-    else
-        mapSettingsModal.style.display = "none";
+        projectSettingsModal.style.display = "none";
 }
 
 //
@@ -414,8 +384,9 @@ window.electronAPI.onSaveCompleted((_, value) => {
 // Event handler for when a request to load a project from a file is recieved.
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
-    setMapDimensions();
+    applyMapDimensions();
     updateGraphicalTileLayers();
+    setProjectSettingsForm();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
 
@@ -430,10 +401,36 @@ window.electronAPI.loadNewProject((_, value) => {
         tilesetImagePath: value.tilesetImagePath
     };
 
-    setMapDimensions();
+    applyMapDimensions();
     updateGraphicalTileLayers();
+    setProjectSettingsForm();
     tileSetSourceImage.src = project.tilesetImagePath;
 });
+
+function setProjectSettingsForm() {
+    let projectNameInput = document.getElementById('project-name-input');
+    let projectWidthInput = document.getElementById('map-dimensions-width-input');
+    let projectHeightInput = document.getElementById('map-dimensions-height-input');
+
+    projectNameInput.value = project.name;
+    projectWidthInput.value = project.mapWidth;
+    projectHeightInput.value = project.mapHeight;
+}
+
+projectSettingsApplyButton.onclick = async () => {
+    let projectNameInput = document.getElementById('project-name-input');
+    let projectWidthInput = document.getElementById('map-dimensions-width-input');
+    let projectHeightInput = document.getElementById('map-dimensions-height-input');
+
+    project.name = projectNameInput.value;
+    project.mapWidth = projectWidthInput.value;
+    project.mapHeight = projectHeightInput.value;
+    await window.electronAPI.updateProjectName(project.name);
+    applyMapDimensions();
+    setTimeout(() => {
+        drawMap();
+    }, 50);
+}
 
 //
 // Logic Functions
@@ -483,7 +480,13 @@ function updateGraphicalTileLayers() {
 }
 
 // Sets the dimensions of the main canvas
-function setMapDimensions() {
+function applyMapDimensions() {
+    if (project.graphicalTileLayers) {
+        for (let i = 0; i < project.graphicalTileLayers.length; i++) {
+            project.graphicalTileLayers[i].values = project.graphicalTileLayers[i].values.filter(val => val.X < project.mapWidth && val.Y < project.mapHeight);
+        }
+    }
+
     mapCanvas.width = project.mapWidth;
     mapCanvas.height = project.mapHeight;
 }
@@ -516,7 +519,6 @@ function setTile(mouseX, mouseY) {
 
     if (mapMode === MapModes.Collision) {
         removeCollisionTile(mouseX, mouseY);
-        console.log("setting collision tile");
         project.collisionTiles.push({ X: mouseX, Y: mouseY });
     }
 
@@ -589,8 +591,8 @@ function drawCell(x, y) {
                 collisionTileImage,
                 0,
                 0,
-                64,
-                64,
+                collisionTileSize,
+                collisionTileSize,
                 cell.X,
                 cell.Y,
                 project.tileSize,

@@ -27,9 +27,6 @@
               <label>Tiles</label>
             </div>
             <div class="tile-tool-container">
-              <button id="btn-tile-settings" class="secondary-button tool-element" title="Tile Settings (T)">
-                <img src="./Assets/hamburger_black.png" width="18px" />
-              </button>
             </div>
           </header>
           <div id="tileset-container">
@@ -82,38 +79,29 @@
     </div>
   </div>
   <!-- The Modal -->
-  <div id="tile-settings-modal" class="modal">
+  <div id="project-settings-modal" class="modal">
     <!-- Modal content -->
-    <div class="modal-content">
+    <div id="project-settings-modal-content" class="modal-content">
       <div class="modal-header">
-        <h2>Tile&nbsp;Settings</h2>
+        <h2>Project&nbsp;Settings</h2>
       </div>
-      <div class="flex-container">
-        <div></div>
-        <div class="settings-label-container">
-          <label for="tilesizes">Tile Size:</label>
+      <div class="grid-container project-settings-form-container">
+        <div style="grid-column: 1; grid-row: 1;">
+          <label for="projectName" class="project-settings-label ">Name:</label>
         </div>
-        <div class="settings-form-input-container">
-          <select name="tilesizes" id="tile-size-select">
-            <option value="16">16</option>
-            <option value="32" selected>32</option>
-            <option value="48">48</option>
-            <option value="64">64</option>
-          </select>
+        <div style="grid-column: 2; grid-row: 1">
+          <input type="text" id="project-name-input" name="projectName" placeholder="Project name...">
         </div>
-      </div>
-      <div class="flex-container">
-        <div>
-          <button type="button" id="open-file-button" class="primary-button">Import&nbsp;Tileset</button>
+        <div style="grid-column: 1; grid-row: 2;">
+          <label class="project-settings-label ">Map Dimensions:</label>
         </div>
-      </div>
-    </div>
-  </div>
-  <div id="map-settings-modal" class="modal">
-    <!-- Modal content -->
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Map&nbsp;Settings</h2>
+        <div style="grid-column: 2; grid-row: 2;">
+          <input type="number" placeholder="Width" id="map-dimensions-width-input" style="width:calc(50% - 5px);">
+          <input type="number" placeholder="Height" id="map-dimensions-height-input" style="width:calc(50% - 5px);">
+        </div>
+        <div style="grid-column: 1 / span 2; grid-row: 3;">
+          <button class="primary-button" id="project-settings-apply-button" type="button">Apply</button>
+        </div>
       </div>
     </div>
   </div>
