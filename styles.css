@@ -436,3 +436,28 @@ label {
 #project-settings-apply-button {
    float: right;
 }
+
+.selection-context-menu-item {
+   height: 25%;
+   width: 100%;
+   text-align: center;
+   margin: auto;
+}
+
+.selection-context-menu-item:hover {
+   background-color: #333;
+}
+
+.selection-context-menu-item:focus {
+   background-color: #333;
+   cursor: pointer;
+}
+
+.selection-context-menu-item-hover-hack {
+   height: 25%;
+   width: 100%;
+   text-align: center;
+   margin: auto;
+   cursor: pointer;
+   background-color: #333;
+}

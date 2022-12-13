@@ -1,5 +1,6 @@
 import { DisplayMessage, MessageType } from './modules/messaging.js';
 import { FillFlood } from './modules/fillflood.js'
+import { PresentContext, SelectionModeOptions } from './modules/selectioncontext.js';
 
 //
 // Project Data
@@ -144,9 +145,8 @@ mapCanvas.addEventListener("mouseup", (event) => {
         if (event.button === 0) {
             isLeftMouseDown = false;
             if (mapMode === MapModes.Select) {
-                clearSelectModeCursor();
-                let mouseCoords = getMouseCoordinatesOnMap(event);
-                drawMapCursor(mouseCoords[0], mouseCoords[1]);
+                mapMode = MapModes.Suspend;
+                PresentContext(event.clientX, event.clientY);
             }
         }
         else if (event.button === 1) {
@@ -217,7 +217,6 @@ mapCanvas.addEventListener("mousedown", (event) => {
 
 mapCanvas.addEventListener("mousemove", (event) => {
     if (mapMode !== MapModes.Suspend) {
-
         let mouseCoords = getMouseCoordinatesOnMap(event);
 
         if (mapMode === MapModes.Select && isLeftMouseDown) {
@@ -241,6 +240,28 @@ mapCanvas.addEventListener("mousemove", (event) => {
                 drawMapCursor(mouseCoords[0], mouseCoords[1]);
             }
         }
+    }
+});
+
+mapCanvas.addEventListener('select-mode-option-selected', function (event) {
+
+    switch (event.detail) {
+        case SelectionModeOptions.Copy:
+            console.log("Copy");
+            break;
+        case SelectionModeOptions.Cut:
+            console.log("Cut");
+            break;
+        case SelectionModeOptions.Delete:
+            console.log("Delete");
+            break;
+        case SelectionModeOptions.Cancel:
+            console.log("Cancel");
+            changeMapMode(MapModes.Select);
+            clearSelectModeCursor();
+            let mouseCoords = getMouseCoordinatesOnMap(event);
+            drawMapCursor(mouseCoords[0], mouseCoords[1]);
+            break;
     }
 });
 

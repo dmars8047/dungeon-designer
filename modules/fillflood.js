@@ -34,7 +34,6 @@ export function FillFlood(x, y, layerNodes, tileSize, tileSheetX, tileSheetY, ma
 }
 
 function JustFillIt(layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight) {
-    console.log("just fill it!");
     for (let i = 0; i < mapHeight; i += tileSize) {
         for (let j = 0; j < mapWidth; j += tileSize) {
             Set(j, i, layerNodes, tileSheetX, tileSheetY, null);
