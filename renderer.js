@@ -77,34 +77,41 @@ window.onload = (_) => {
 }
 
 window.onkeydown = (event) => {
-    if (!event.repeat && mapMode !== MapModes.Suspend) {
-        switch (event.key) {
-            case 'g':
-                changeMapMode(MapModes.Fill);
-                break;
-            case 'c':
-                changeMapMode(MapModes.Collision);
-                break;
-            case 'b':
-                changeMapMode(MapModes.Brush);
-                break;
-            case 'e':
-                changeMapMode(MapModes.Eraser);
-                break;
-            case 'p':
-                toggleProjectSettingsModal(true);
-                break;
-            case 'q':
-                changeMapMode(MapModes.Select);
-                break;
-            case 's':
-                if (event.ctrlKey)
-                    callProjectSave();
-                break;
-            case 'Escape':
-                toggleProjectSettingsModal(false);
-                break;
+    if (!event.repeat) {
+        if (mapMode !== MapModes.Suspend) {
+            switch (event.key) {
+                case 'g':
+                    changeMapMode(MapModes.Fill);
+                    break;
+                case 'c':
+                    changeMapMode(MapModes.Collision);
+                    break;
+                case 'b':
+                    changeMapMode(MapModes.Brush);
+                    break;
+                case 'e':
+                    changeMapMode(MapModes.Eraser);
+                    break;
+                case 'p':
+                    toggleProjectSettingsModal(true);
+                    break;
+                case 'q':
+                    changeMapMode(MapModes.Select);
+                    break;
+                case 's':
+                    if (event.ctrlKey)
+                        callProjectSave();
+                    break;
+            }
         }
+        else {
+            switch (event.key) {
+                case 'Escape':
+                    toggleProjectSettingsModal(false);
+                    break;
+            }
+        }
+
     }
 }
 
@@ -317,7 +324,7 @@ function drawSelectionArea(mouseCoords) {
 
 function copySelectionToPrefab() {
     if (selectedRect && selectedRect.cells && selectedRect.cells.length > 0) {
-        
+
         const prefabContainer = document.getElementById('prefab-container');
 
         const prefabCanvas = document.createElement("canvas");
@@ -335,7 +342,7 @@ function copySelectionToPrefab() {
 
                 let tile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y)[0];
 
-                let cell = { TilesheetX: tile.TilesheetX, TilesheetY: TilesheetY, X: tile.X - selectedRect.startX, Y: tile.Y - selectedRect.startY };
+                let cell = { TilesheetX: tile.TilesheetX, TilesheetY: tile.TilesheetY, X: tile.X - selectedRect.startX, Y: tile.Y - selectedRect.startY };
 
                 ctx.drawImage(tileSetSourceImage, cell.TilesheetX, cell.TilesheetY, project.tileSize, project.tileSize, cell.X, cell.Y, project.tileSize, project.tileSize);
 

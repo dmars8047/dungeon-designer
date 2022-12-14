@@ -13,17 +13,17 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
     let contextMenuContainer = document.createElement("div");
     contextMenuContainer.style.cursor = "pointer";
     contextMenuContainer.id = contextMenuId;
-    contextMenuContainer.style.width = "128px";
+    contextMenuContainer.style.width = "160px";
     contextMenuContainer.style.height = "80px";
     contextMenuContainer.style.position = "absolute";
-    contextMenuContainer.style.left = `${mouseX - 12}px`;
-    contextMenuContainer.style.top = `${mouseY - 12}px`;
+    contextMenuContainer.style.left = `${mouseX - 16}px`;
+    contextMenuContainer.style.top = `${mouseY - 16}px`;
     contextMenuContainer.style.backgroundColor = "#575655";
     contextMenuContainer.onmouseleave = () => SelectionMade(SelectionModeOptions.Cancel);
 
     if (!selectionOverMax) {
         let copyMenuItem = document.createElement("div");
-        copyMenuItem.innerText = "Copy (C)";
+        copyMenuItem.innerText = "Copy to Prefab";
         copyMenuItem.classList.add(contextMenuItemHoverHackCssClass);
         copyMenuItem.onmouseleave = () => {
             copyMenuItem.classList.remove(contextMenuItemHoverHackCssClass);
@@ -33,15 +33,15 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
         contextMenuContainer.appendChild(copyMenuItem);
 
         let cutMenuItem = document.createElement("div");
-        cutMenuItem.innerText = "Cut (X)";
+        cutMenuItem.innerText = "Cut To Prefab";
         cutMenuItem.classList.add(contextMenuItemCssClass);
         cutMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Cut);
         contextMenuContainer.appendChild(cutMenuItem);
     }
 
     let delMenuItem = document.createElement("div");
-    delMenuItem.innerText = "Delete (Del)";
-    
+    delMenuItem.innerText = "Delete";
+
     if (selectionOverMax) {
         delMenuItem.classList.add(contextMenuItemHoverHackCssClass);
         delMenuItem.onmouseleave = () => {
@@ -57,7 +57,7 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
     contextMenuContainer.appendChild(delMenuItem);
 
     let cancelMenuItem = document.createElement("div");
-    cancelMenuItem.innerText = "Cancel (Esc)";
+    cancelMenuItem.innerText = "Cancel";
     cancelMenuItem.classList.add(contextMenuItemCssClass);
     cancelMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Cancel);
     contextMenuContainer.appendChild(cancelMenuItem);
