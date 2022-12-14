@@ -47,12 +47,35 @@ body {
 }
 
 #tileset-container {
-   height: 95%;
+   height: 60%;
    overflow: auto;
    border-right: 1px solid #969da8;
    border-left: 1px solid #969da8;
    border-bottom: 1px solid #969da8;
    box-sizing: border-box;
+}
+
+#prefab-header {
+   height: 5%;
+   border-right: 1px solid #969da8;
+   border-left: 1px solid #969da8;
+   border-bottom: 1px solid #969da8;
+}
+
+#prefab-container {
+   display: flex;
+   min-height: 256px;
+   min-width: 256px;
+   height: 30%;
+   overflow: auto;
+   border-right: 1px solid #969da8;
+   border-left: 1px solid #969da8;
+   border-bottom: 1px solid #969da8;
+   box-sizing: border-box;
+}
+
+#prefab-container>canvas {
+   margin: auto;
 }
 
 .flex-container {

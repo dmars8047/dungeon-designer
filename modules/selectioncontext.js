@@ -9,7 +9,7 @@ export const SelectionModeOptions = {
     Cancel: 3
 }
 
-export function PresentContext(mouseX, mouseY) {
+export function PresentContext(mouseX, mouseY, selectionOverMax) {
     let contextMenuContainer = document.createElement("div");
     contextMenuContainer.style.cursor = "pointer";
     contextMenuContainer.id = contextMenuId;
@@ -21,25 +21,38 @@ export function PresentContext(mouseX, mouseY) {
     contextMenuContainer.style.backgroundColor = "#575655";
     contextMenuContainer.onmouseleave = () => SelectionMade(SelectionModeOptions.Cancel);
 
-    let copyMenuItem = document.createElement("div");
-    copyMenuItem.innerText = "Copy (C)";
-    copyMenuItem.classList.add(contextMenuItemHoverHackCssClass);
-    copyMenuItem.onmouseleave = () => {
-        copyMenuItem.classList.remove(contextMenuItemHoverHackCssClass);
-        copyMenuItem.classList.add(contextMenuItemCssClass);
-    };
-    copyMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Copy);
-    contextMenuContainer.appendChild(copyMenuItem);
+    if (!selectionOverMax) {
+        let copyMenuItem = document.createElement("div");
+        copyMenuItem.innerText = "Copy (C)";
+        copyMenuItem.classList.add(contextMenuItemHoverHackCssClass);
+        copyMenuItem.onmouseleave = () => {
+            copyMenuItem.classList.remove(contextMenuItemHoverHackCssClass);
+            copyMenuItem.classList.add(contextMenuItemCssClass);
+        };
+        copyMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Copy);
+        contextMenuContainer.appendChild(copyMenuItem);
 
-    let cutMenuItem = document.createElement("div");
-    cutMenuItem.innerText = "Cut (X)";
-    cutMenuItem.classList.add(contextMenuItemCssClass);
-    cutMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Cut);
-    contextMenuContainer.appendChild(cutMenuItem);
+        let cutMenuItem = document.createElement("div");
+        cutMenuItem.innerText = "Cut (X)";
+        cutMenuItem.classList.add(contextMenuItemCssClass);
+        cutMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Cut);
+        contextMenuContainer.appendChild(cutMenuItem);
+    }
 
     let delMenuItem = document.createElement("div");
     delMenuItem.innerText = "Delete (Del)";
-    delMenuItem.classList.add(contextMenuItemCssClass);
+    
+    if (selectionOverMax) {
+        delMenuItem.classList.add(contextMenuItemHoverHackCssClass);
+        delMenuItem.onmouseleave = () => {
+            delMenuItem.classList.remove(contextMenuItemHoverHackCssClass);
+            delMenuItem.classList.add(contextMenuItemCssClass);
+        };
+    }
+    else {
+        delMenuItem.classList.add(contextMenuItemCssClass);
+    }
+
     delMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Delete);
     contextMenuContainer.appendChild(delMenuItem);
 

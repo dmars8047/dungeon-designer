@@ -49,7 +49,8 @@ let mapMode = MapModes.Brush;
 
 let mapCursorPosition = [-1, -1];
 let lastSetTilePosition = [-1, -1];
-let selectCells = [];
+let selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
+let prefabValue = { width: 0, height: 0, values: [] };
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
@@ -146,7 +147,7 @@ mapCanvas.addEventListener("mouseup", (event) => {
             isLeftMouseDown = false;
             if (mapMode === MapModes.Select) {
                 mapMode = MapModes.Suspend;
-                PresentContext(event.clientX, event.clientY);
+                PresentContext(event.clientX, event.clientY, mapCursorColor === cursorSelectModeTooLargeColor);
             }
         }
         else if (event.button === 1) {
@@ -248,22 +249,39 @@ mapCanvas.addEventListener('select-mode-option-selected', function (event) {
     switch (event.detail) {
         case SelectionModeOptions.Copy:
             console.log("Copy");
+            copySelectionToPrefab();
+            changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cut:
             console.log("Cut");
+            copySelectionToPrefab()
+            removedSelectedTilesFromMap();
+            changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Delete:
             console.log("Delete");
+            removedSelectedTilesFromMap();
+            changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cancel:
             console.log("Cancel");
             changeMapMode(MapModes.Select);
-            clearSelectModeCursor();
-            let mouseCoords = getMouseCoordinatesOnMap(event);
-            drawMapCursor(mouseCoords[0], mouseCoords[1]);
             break;
     }
+
+    if (mapMode === MapModes.Select) {
+        clearSelectModeCursor();
+        let mouseCoords = getMouseCoordinatesOnMap(event);
+        drawMapCursor(mouseCoords[0], mouseCoords[1]);
+    }
 });
+
+function removedSelectedTilesFromMap() {
+    for (let i = 0; i < selectedRect.cells.length; i++) {
+        project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== selectedRect.cells[i].x || val.Y !== selectedRect.cells[i].y);
+        drawCell(selectedRect.cells[i].x, selectedRect.cells[i].y);
+    }
+}
 
 function drawSelectionArea(mouseCoords) {
     const startX = mapCursorPosition[0];
@@ -288,16 +306,66 @@ function drawSelectionArea(mouseCoords) {
     clearSelectModeCursor();
     drawSelectModeCursor(rectStartX, rectStartY, rectWidth, rectHeight);
 
-    selectCells = [];
+    selectedRect = { startX: rectStartX, startY: rectStartY, width: rectWidth, height: rectHeight, cells: [] };
 
-    const cleanupHeight = rectStartY + rectHeight + project.tileSize;
-    const cleanupWidth = rectStartX + rectWidth + project.tileSize;
-    const cleanupY = rectStartY - project.tileSize;
-    const cleanupX = rectStartX - project.tileSize;
+    for (let j = rectStartY; j <= maxY; j += project.tileSize) {
+        for (let i = rectStartX; i <= maxX; i += project.tileSize) {
+            selectedRect.cells.push({ x: i, y: j });
+        }
+    }
+}
 
-    for (let j = cleanupY; j <= cleanupHeight; j += project.tileSize) {
-        for (let i = cleanupX; i <= cleanupWidth; i += project.tileSize) {
-            selectCells.push({ x: i, y: j });
+function copySelectionToPrefab() {
+    if (selectedRect && selectedRect.cells && selectedRect.cells.length > 0) {
+        
+        const prefabContainer = document.getElementById('prefab-container');
+
+        const prefabCanvas = document.createElement("canvas");
+        prefabCanvas.width = selectedRect.width;
+        prefabCanvas.height = selectedRect.height;
+        prefabCanvas.classList.add('tile-canvas');
+        prefabCanvas.id = "prefab-canvas";
+        // newCanvas.onclick = () => { selectTile(x, y); changeMapMode(MapModes.Brush); };
+        let ctx = prefabCanvas.getContext("2d");
+
+        let cells = [];
+
+        for (let i = 0; i < selectedRect.cells.length; i++) {
+            if (project.graphicalTileLayers[currentGraphicalTileLayer].values.some(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y)) {
+
+                let tile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y)[0];
+
+                let cell = { TilesheetX: tile.TilesheetX, TilesheetY: TilesheetY, X: tile.X - selectedRect.startX, Y: tile.Y - selectedRect.startY };
+
+                ctx.drawImage(tileSetSourceImage, cell.TilesheetX, cell.TilesheetY, project.tileSize, project.tileSize, cell.X, cell.Y, project.tileSize, project.tileSize);
+
+                cells.push(cell);
+            }
+        }
+
+        if (cells.length > 0) {
+            prefabValue = { height: selectedRect.height, width: selectedRect.width, values: cells };
+
+            while (prefabContainer.firstChild) {
+                prefabContainer.removeChild(prefabContainer.firstChild);
+            }
+
+            prefabContainer.append(prefabCanvas);
+        }
+    }
+}
+
+function clearSelectModeCursor() {
+    if (selectedRect && selectedRect.cells && selectedRect.cells.length > 0) {
+        const cleanupHeight = selectedRect.startY + selectedRect.height + project.tileSize;
+        const cleanupWidth = selectedRect.startX + selectedRect.width + project.tileSize;
+        const cleanupY = selectedRect.startY - project.tileSize;
+        const cleanupX = selectedRect.startX - project.tileSize;
+
+        for (let y = cleanupY; y <= cleanupHeight; y += project.tileSize) {
+            for (let x = cleanupX; x <= cleanupWidth; x += project.tileSize) {
+                drawCell(x, y);
+            }
         }
     }
 }
@@ -325,12 +393,6 @@ tileSetSourceImage.onload = () => {
     }, 100);
 };
 
-
-function clearSelectModeCursor() {
-    for (let i = 0; i < selectCells.length; i++) {
-        drawCell(selectCells[i].x, selectCells[i].y);
-    }
-}
 
 function changeMapMode(desiredMode, toggleBehavior = false) {
 
@@ -385,7 +447,7 @@ function changeMapMode(desiredMode, toggleBehavior = false) {
     }
 
     clearSelectModeCursor();
-    selectCells = [];
+    selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
     lastSetTilePosition = [-1, -1];
     allowSetTile = true;
     drawMapCursor(mapCursorPosition[0], mapCursorPosition[1]);
@@ -419,7 +481,7 @@ window.electronAPI.saveProject((event, _) => {
 // Handles a successful save message from the back end.
 window.electronAPI.onSaveCompleted((_, value) => {
     let messageType = value.success ? MessageType.Information : MessageType.Error;
-    DisplayMessage(value.message, 2500, messageType);
+    DisplayMessage(value.message, 2000, messageType);
 });
 
 // Event handler for when a request to load a project from a file is recieved.
@@ -570,8 +632,7 @@ function setTile(mouseX, mouseY) {
             project.graphicalTileLayers[currentGraphicalTileLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
         }
     }
-
-    if (mapMode === MapModes.Collision) {
+    else if (mapMode === MapModes.Collision) {
         removeCollisionTile(mouseX, mouseY);
         project.collisionTiles.push({ X: mouseX, Y: mouseY });
     }
@@ -587,10 +648,10 @@ function removeCollisionTile(mouseX, mouseY) {
 }
 
 // Utility for getting coordinates of mouse click
-function getMouseCoordinatesOnMap(e) {
-    const { x, y } = e.target.getBoundingClientRect();
-    const mouseX = Math.floor((e.clientX - x) / project.tileSize) * project.tileSize;
-    const mouseY = Math.floor((e.clientY - y) / project.tileSize) * project.tileSize;
+function getMouseCoordinatesOnMap(event) {
+    const { x, y } = event.target.getBoundingClientRect();
+    const mouseX = Math.floor((event.clientX - x) / project.tileSize) * project.tileSize;
+    const mouseY = Math.floor((event.clientY - y) / project.tileSize) * project.tileSize;
 
     if (mouseX === mapCursorPosition[0] && mouseY === mapCursorPosition[1]) {
         allowDrawMapCursor = false;
@@ -708,13 +769,6 @@ function clearMapLayer() {
     drawMap();
 }
 
-// Removes all child canvases from the tileset selection container
-function clearTileSet() {
-    while (tilesetContainer.firstChild) {
-        tilesetContainer.removeChild(tilesetContainer.firstChild);
-    }
-}
-
 // Initializes the tileset selection container with selectable canvases which represent individual tiles
 function initTileSelector() {
     for (let y = 0; y < tileSetSourceImage.height; y += project.tileSize) {
@@ -724,7 +778,7 @@ function initTileSelector() {
             newCanvas.height = project.tileSize;
             newCanvas.classList.add('tile-canvas');
             newCanvas.id = "tile-selection-canvas-" + x + "-" + y;
-            newCanvas.onclick = () => { selectTile(x, y); };
+            newCanvas.onclick = () => { selectTile(x, y); changeMapMode(MapModes.Brush); };
             let ctx = newCanvas.getContext("2d");
             ctx.drawImage(tileSetSourceImage, x, y, project.tileSize, project.tileSize, 0, 0, project.tileSize, project.tileSize);
             tilesetContainer.append(newCanvas);
