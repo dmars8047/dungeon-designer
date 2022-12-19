@@ -284,23 +284,19 @@ mapCanvas.addEventListener('select-mode-option-selected', function (event) {
 
     switch (event.detail) {
         case SelectionModeOptions.Copy:
-            console.log("Copy");
             copySelectionToPrefab();
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cut:
-            console.log("Cut");
             copySelectionToPrefab()
             removedSelectedTilesFromMap();
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Delete:
-            console.log("Delete");
             removedSelectedTilesFromMap();
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cancel:
-            console.log("Cancel");
             changeMapMode(MapModes.Select);
             break;
     }

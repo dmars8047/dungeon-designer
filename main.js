@@ -1,7 +1,6 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, ipcMain, dialog, screen } = require('electron')
 const path = require('path')
-const fs = require('fs/promises');
 
 const isMac = process.platform === 'darwin'
 let landingWindow;
@@ -33,7 +32,7 @@ function createLandingWindow() {
     }
   });
 
-  landingWindow.webContents.openDevTools();
+  // landingWindow.webContents.openDevTools();
 }
 
 function createMainWindow() {
@@ -100,7 +99,7 @@ function createMainWindow() {
   });
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -140,8 +139,7 @@ app.on('window-all-closed', function () {
 });
 
 async function handleExportProject(payload) {
-  console.log("Handling export project request...");
-  console.table(payload);
+  const fs = require('fs/promises');
 
   if (payload.format === "JSON") {
     try {
@@ -152,7 +150,7 @@ async function handleExportProject(payload) {
       if (payload.projectData.collisionTiles.length > 0)
         await fs.writeFile(payload.exportDirectory + "/collision-tiles.json", JSON.stringify(payload.projectData.collisionTiles));
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
 
     mainWindow.webContents.send('export-complete', payload.exportDirectory);
@@ -198,25 +196,21 @@ async function handleExportProject(payload) {
       mainWindow.webContents.send('export-complete', payload.exportDirectory);
 
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 }
 
 async function handleNewProject(newProjectData) {
   // Initialize the main window
-  console.log("Handling new project request...");
   createMainWindow();
 
   mainWindow.once('ready-to-show', () => {
-    console.log('Main window is ready to show...');
     mainWindow.show();
     mainWindow.maximize();
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('Main window finished loading...');
-    console.table(newProjectData);
     mainWindow.webContents.send('load-new-project', newProjectData);
   });
 
@@ -287,8 +281,6 @@ async function handleOpenProjectFromLanding() {
   else {
     projectFilePath = filePaths[0];
 
-    console.log(projectFilePath);
-
     const fs = require('fs');
 
     fs.readFile(projectFilePath, 'utf-8', function (err, projectDataString) {
@@ -302,7 +294,6 @@ async function handleOpenProjectFromLanding() {
         createMainWindow();
 
         mainWindow.once('ready-to-show', () => {
-          console.log('Main window is ready to show...');
           mainWindow.show();
           mainWindow.maximize();
         })
@@ -348,8 +339,6 @@ async function handleOpenProject(mainWindow) {
 }
 
 async function handleSaveProject(mainWindow) {
-  console.log("Save request recieved...");
-
   if (!projectFilePath) {
     const { canceled, filePath } = await dialog.showSaveDialog({
       defaultPath: projectName + ".ddes",
@@ -372,8 +361,6 @@ async function handleSaveProject(mainWindow) {
 
 async function saveProjectFile(payload) {
   const fs = require('fs');
-
-  console.log("Project file path: " + projectFilePath);
 
   fs.writeFile(projectFilePath, JSON.stringify(payload), err => {
     if (err) {
