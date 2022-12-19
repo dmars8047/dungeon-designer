@@ -122,6 +122,38 @@
       </div>
     </div>
   </div>
+  <div id="export-modal" class="modal">
+    <div id="export-modal-content" class="modal-content">
+      <div class="modal-header">
+        <h2>Export Map Data</h2>
+      </div>
+      <div class="grid-container export-form-container">
+        <div style="grid-column: 1; grid-row: 1;">
+          <label style="float:right">File Type:</label>
+        </div>
+        <div style="grid-column: 2 / span 2; grid-row: 1;border:solid 1px; text-align: center;">
+          <input style="width:auto; vertical-align: middle;" type="radio" id="json-radio-btn" name="export_type"
+            value="JSON" checked>
+          <label style="display: inline; vertical-align: middle;" for="json-radio-btn">JSON</label>
+          <input style="width:auto; vertical-align: middle" type="radio" id="custom-game-format-radio-btn" name="export_type"
+            value="GameData">
+          <label style="display: inline; vertical-align: middle" for="custom-game-format-radio-btn">Custom&nbsp;Game&nbsp;Format</label>
+        </div>
+        <div style="grid-column: 1; grid-row: 2;">
+          <label style="float:right">Export&nbsp;Directory:</label>
+        </div>
+        <div style="grid-column: 2 / span 2; grid-row: 2;">
+          <input id="export-directory-file-input" type="text" placeholder="Export Directory..." readonly>
+        </div>
+        <div style="grid-column: 2; grid-row: 3;">
+          <button class="secondary-button" id="select-export-directory-button" type="button">Select Output Directory</button>
+        </div>
+        <div style="grid-column: 3; grid-row: 3;">
+          <button class="primary-button" id="export-button" type="button">Export</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- You can also require other files to run in this process -->
   <script src="./renderer.js" type="module"></script>
 </body>

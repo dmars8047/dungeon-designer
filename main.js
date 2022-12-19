@@ -1,6 +1,7 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, ipcMain, dialog, screen } = require('electron')
 const path = require('path')
+const fs = require('fs/promises');
 
 const isMac = process.platform === 'darwin'
 let landingWindow;
@@ -95,7 +96,6 @@ function createMainWindow() {
   mainWindow.on('resize', function (e) {
     e.preventDefault();
     var size = mainWindow.getSize();
-    console.log(size);
     mainWindow.webContents.send('window:resize', { windowHeight: size[1], windowWidth: size[0] });
   });
 
@@ -114,7 +114,9 @@ app.whenReady().then(() => {
   ipcMain.handle('project:projectCreationWindowEntered', handleNewProjectCreationScreenEntered);
   ipcMain.handle('project:projectCreationWindowExited', handleNewProjectCreationScreenExited);
   ipcMain.on('project:newProject', (_event, value) => { handleNewProject(value); });
+  ipcMain.on('export:setDirectory', (_event, _) => { handleSetExportDirectoryRequest(); });
   ipcMain.on('project:updateName', (_event, value) => { handleNewProjectName(value) });
+  ipcMain.on('project:export', (_event, value) => { handleExportProject(value); });
   ipcMain.on('project:saveToFile', (_event, value) => { saveProjectFile(value); });
 
   createLandingWindow();
@@ -137,6 +139,70 @@ app.on('window-all-closed', function () {
   }
 });
 
+async function handleExportProject(payload) {
+  console.log("Handling export project request...");
+  console.table(payload);
+
+  if (payload.format === "JSON") {
+    try {
+      if (payload.projectData.graphicalTileLayers[0].values.length > 0)
+        await fs.writeFile(payload.exportDirectory + "/background-tiles.json", JSON.stringify(payload.projectData.graphicalTileLayers[0]));
+      if (payload.projectData.graphicalTileLayers[1].values.length > 0)
+        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.json", JSON.stringify(payload.projectData.graphicalTileLayers[1]));
+      if (payload.projectData.collisionTiles.length > 0)
+        await fs.writeFile(payload.exportDirectory + "/collision-tiles.json", JSON.stringify(payload.projectData.collisionTiles));
+    } catch (err) {
+      console.log(err);
+    }
+
+    mainWindow.webContents.send('export-complete', payload.exportDirectory);
+  }
+  else if (payload.format === "Custom Game Format") {
+    try {
+      if (payload.projectData.graphicalTileLayers[0].values.length > 0) {
+        let backgroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: BACKGROUND_TILES\n`;
+        backgroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+
+        for (let i = 0; i < payload.projectData.graphicalTileLayers[0].values.length; i++) {
+          let tile = payload.projectData.graphicalTileLayers[0].values[i];
+          backgroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
+        }
+
+        await fs.writeFile(payload.exportDirectory + "/background-tiles.txt", backgroundTileContent);
+      }
+
+      if (payload.projectData.graphicalTileLayers[1].values.length > 0) {
+        let foregroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: FOREGROUND_TILES\n`;
+        foregroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+
+        for (let i = 0; i < payload.projectData.graphicalTileLayers[1].values.length; i++) {
+          let tile = payload.projectData.graphicalTileLayers[1].values[i];
+          foregroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
+        }
+
+        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.txt", foregroundTileContent);
+      }
+
+      if (payload.projectData.collisionTiles.length > 0) {
+        let collisionTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: COLLISION_TILES\n`;
+        collisionTileContent += "# FORMAT: X, Y\n";
+
+        for (let i = 0; i < payload.projectData.collisionTiles.length; i++) {
+          let tile = payload.projectData.collisionTiles[i];
+          collisionTileContent += `${tile.X}, ${tile.Y}\n`;
+        }
+
+        await fs.writeFile(payload.exportDirectory + "/collision-tiles.txt", collisionTileContent);
+      }
+
+      mainWindow.webContents.send('export-complete', payload.exportDirectory);
+
+    } catch (err) {
+      console.log(err);
+    }
+  }
+}
+
 async function handleNewProject(newProjectData) {
   // Initialize the main window
   console.log("Handling new project request...");
@@ -157,6 +223,19 @@ async function handleNewProject(newProjectData) {
   projectName = newProjectData.name.replace(" ", "_");
   projectInitialized = true;
   landingWindow.close();
+};
+
+async function handleSetExportDirectoryRequest() {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  });
+
+  if (canceled) {
+    mainWindow.setEnabled(true);
+    mainWindow.focus();
+  } else {
+    mainWindow.webContents.send('export-directory-selected', filePaths[0]);
+  }
 }
 
 async function handleNewProjectCreationScreenEntered() {

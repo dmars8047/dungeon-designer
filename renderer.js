@@ -17,7 +17,10 @@ let clearLayerButton = document.getElementById("clear-layer-btn");
 let tilesetContainer = document.getElementById("tileset-container");
 let graphicalLayerSelect = document.getElementById("layer-select");
 let projectSettingsButton = document.getElementById("btn-map-settings");
+let exportButton = document.getElementById("export-button");
 let projectSettingsModal = document.getElementById("project-settings-modal");
+let exportModal = document.getElementById("export-modal");
+let selectExportDirectoryButton = document.getElementById('select-export-directory-button');
 let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
 let brushToolButton = document.getElementById('brush-tool-btn');
@@ -25,6 +28,7 @@ let collisionToolButton = document.getElementById('collision-tool-btn');
 let fillToolButton = document.getElementById('fill-tool-btn');
 let saveButton = document.getElementById('save-btn');
 let projectSettingsApplyButton = document.getElementById('project-settings-apply-button');
+
 
 //
 // Function Variables
@@ -95,6 +99,9 @@ window.onkeydown = (event) => {
                 case 'p':
                     toggleProjectSettingsModal(true);
                     break;
+                case 'o':
+                    toggleExportModal(true);
+                    break;
                 case 'q':
                     changeMapMode(MapModes.Select);
                     break;
@@ -107,11 +114,33 @@ window.onkeydown = (event) => {
         else {
             switch (event.key) {
                 case 'Escape':
+                    toggleExportModal(false);
                     toggleProjectSettingsModal(false);
                     break;
             }
         }
 
+    }
+}
+
+selectExportDirectoryButton.onclick = async () => {
+    await window.electronAPI.setExportDirectory();
+}
+
+exportButton.onclick = async () => {
+    const jsonRadioBtn = document.getElementById('json-radio-btn');
+    const customGameFormatRadioBtn = document.getElementById('custom-game-format-radio-btn');
+    const exportDirectoryInput = document.getElementById('export-directory-file-input');
+
+    if (!exportDirectoryInput.value) {
+        DisplayMessage("An export directory must be specified", 1500, MessageType.Warning);
+    }
+
+    if (jsonRadioBtn.checked) {
+        await window.electronAPI.exportProject({ format: "JSON", exportDirectory: exportDirectoryInput.value, projectData: project });
+    }
+    else if (customGameFormatRadioBtn.checked) {
+        await window.electronAPI.exportProject({ format: "Custom Game Format", exportDirectory: exportDirectoryInput.value, projectData: project });
     }
 }
 
@@ -476,9 +505,25 @@ function toggleProjectSettingsModal(on) {
     }
 }
 
+function toggleExportModal(on) {
+    if (on) {
+        exportModal.style.display = "block";
+        changeMapMode(MapModes.Suspend);
+    }
+    else {
+        exportModal.style.display = "none";
+        changeMapMode(MapModes.Brush);
+    }
+}
+
 //
 // IPC Event Functions
 //
+
+window.electronAPI.onExportDirectorySelected((_, path) => {
+    const input = document.getElementById('export-directory-file-input');
+    input.value = path;
+});
 
 // Sends all information about the project so it can be saved
 window.electronAPI.saveProject((event, _) => {
@@ -487,7 +532,7 @@ window.electronAPI.saveProject((event, _) => {
 
 // Handles a successful save message from the back end.
 window.electronAPI.onSaveCompleted((_, value) => {
-    let messageType = value.success ? MessageType.Information : MessageType.Error;
+    const messageType = value.success ? MessageType.Information : MessageType.Error;
     DisplayMessage(value.message, 2000, messageType);
 });
 
@@ -518,6 +563,10 @@ window.electronAPI.loadNewProject((_, value) => {
     updateGraphicalTileLayers();
     setProjectSettingsForm();
     tileSetSourceImage.src = project.tilesetImagePath;
+});
+
+window.electronAPI.exportComplete((_, value) => {
+    DisplayMessage(`Export to [${value}] Complete.`)
 });
 
 function setProjectSettingsForm() {
