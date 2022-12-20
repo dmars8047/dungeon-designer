@@ -715,6 +715,12 @@ function getMouseCoordinatesOnMap(event) {
     if (mouseX === lastSetTilePosition[0] && mouseY === lastSetTilePosition[1]) {
         allowSetTile = false;
     }
+    else if (mouseX < 0 || mouseY < 0) {
+        allowSetTile = false;
+    }
+    else if (mouseX >= project.mapWidth || mouseY >= project.mapHeight) {
+        allowSetTile = false;
+    }
     else {
         allowSetTile = true;
     }
