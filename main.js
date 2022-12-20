@@ -166,7 +166,7 @@ async function handleExportProject(payload) {
           backgroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
         }
 
-        await fs.writeFile(payload.exportDirectory + "/background-tiles.txt", backgroundTileContent);
+        await fs.writeFile(payload.exportDirectory + "/background-tiles.bro", backgroundTileContent);
       }
 
       if (payload.projectData.graphicalTileLayers[1].values.length > 0) {
@@ -178,7 +178,7 @@ async function handleExportProject(payload) {
           foregroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
         }
 
-        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.txt", foregroundTileContent);
+        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.bro", foregroundTileContent);
       }
 
       if (payload.projectData.collisionTiles.length > 0) {
@@ -190,7 +190,7 @@ async function handleExportProject(payload) {
           collisionTileContent += `${tile.X}, ${tile.Y}\n`;
         }
 
-        await fs.writeFile(payload.exportDirectory + "/collision-tiles.txt", collisionTileContent);
+        await fs.writeFile(payload.exportDirectory + "/collision-tiles.bro", collisionTileContent);
       }
 
       mainWindow.webContents.send('export-complete', payload.exportDirectory);
