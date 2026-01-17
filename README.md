@@ -8,7 +8,7 @@ A 2D tile-based map editor for creating game levels. Design dungeon maps, platfo
 
 ## Features
 
-- **Multi-Layer Editing** - Background and foreground tile layers for depth
+- **Multi-Layer Editing** - Background, middle, and foreground tile layers for depth
 - **Tileset Import** - Load any PNG tilesheet image
 - **Editing Tools** - Brush, eraser, selection, collision marking, and flood fill
 - **Clipboard System** - Copy and paste tile regions for repeated patterns
@@ -111,6 +111,7 @@ Export your map data for use in game engines:
   "background": [
     {"X": 0, "Y": 0, "TilesheetX": 32, "TilesheetY": 0}
   ],
+  "middle": [...],
   "foreground": [...],
   "collision": [
     {"X": 2, "Y": 3}
