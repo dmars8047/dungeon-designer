@@ -10,7 +10,8 @@ export const ActionTypes = {
     FILL_FLOOD: 'FILL_FLOOD',
     CLEAR_LAYER: 'CLEAR_LAYER',
     SELECTION_DELETE: 'SELECTION_DELETE',
-    SELECTION_CUT: 'SELECTION_CUT'
+    SELECTION_CUT: 'SELECTION_CUT',
+    SELECTION_PASTE: 'SELECTION_PASTE'
 };
 
 // Undo and redo stacks
@@ -203,6 +204,8 @@ export function getActionDescription(type) {
             return 'Delete Selection';
         case ActionTypes.SELECTION_CUT:
             return 'Cut Selection';
+        case ActionTypes.SELECTION_PASTE:
+            return 'Paste Selection';
         default:
             return 'Unknown Action';
     }

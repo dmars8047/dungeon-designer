@@ -65,7 +65,8 @@ const MapModes = {
     Select: 2,
     Suspend: 3,
     Collision: 4,
-    Fill: 5
+    Fill: 5,
+    Paste: 6
 }
 
 let mapMode = MapModes.Brush;
@@ -74,6 +75,8 @@ let mapCursorPosition = [-1, -1];
 let lastSetTilePosition = [-1, -1];
 let selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
 let clipboardValue = { width: 0, height: 0, values: [] };
+let pastePreviewPosition = { x: -1, y: -1 };
+let previousModeBeforePaste = MapModes.Brush;
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
@@ -87,6 +90,7 @@ const cursorDrawModeColor = "#30ff5d";
 const cursorCollisionModeColor = "#00ffff";
 const cursorEraserModeColor = "#ff8400";
 const cursorFillModeColor = "#6176ff";
+const cursorPasteModeColor = "#00ffaa";
 const defaultMapBackgroundColor = "#f4f8f9";
 let mapCursorColor = cursorDrawModeColor;
 
@@ -127,9 +131,15 @@ window.onkeydown = (event) => {
                 performRedo();
                 return;
             }
+            // Ctrl+V / Cmd+V for paste
+            if (event.key === 'v' || event.key === 'V') {
+                event.preventDefault();
+                enterPasteMode();
+                return;
+            }
         }
 
-        if (mapMode !== MapModes.Suspend) {
+        if (mapMode !== MapModes.Suspend && mapMode !== MapModes.Paste) {
             switch (event.key) {
                 case 'g':
                     changeMapMode(MapModes.Fill);
@@ -156,6 +166,11 @@ window.onkeydown = (event) => {
                     if (event.ctrlKey)
                         callProjectSave();
                     break;
+            }
+        }
+        else if (mapMode === MapModes.Paste) {
+            if (event.key === 'Escape') {
+                exitPasteMode(true);
             }
         }
         else {
@@ -253,6 +268,12 @@ mapCanvas.addEventListener("mouseleave", () => {
         lastSetTilePosition = [-1, -1];
         clearMapCursor();
         mapCanvas.style.cursor = 'none';
+
+        // Clear paste preview when mouse leaves canvas
+        if (mapMode === MapModes.Paste) {
+            clearPastePreview();
+            pastePreviewPosition = { x: -1, y: -1 };
+        }
     }
 });
 
@@ -261,6 +282,14 @@ mapCanvas.addEventListener("mousedown", (event) => {
         if (event.button === 0) {
             isLeftMouseDown = true;
             let mouseCoords = getMouseCoordinatesOnMap(event);
+
+            // Handle paste mode click
+            if (mapMode === MapModes.Paste) {
+                executePaste(mouseCoords[0], mouseCoords[1]);
+                exitPasteMode(false);
+                return;
+            }
+
             if (mapMode === MapModes.Select) {
                 mapCursorColor = cursorSelectModeColor;
             }
@@ -364,6 +393,12 @@ mapCanvas.addEventListener("mousedown", (event) => {
 mapCanvas.addEventListener("mousemove", (event) => {
     if (mapMode !== MapModes.Suspend) {
         let mouseCoords = getMouseCoordinatesOnMap(event);
+
+        // Handle paste mode preview
+        if (mapMode === MapModes.Paste) {
+            drawPastePreview(mouseCoords[0], mouseCoords[1]);
+            return;
+        }
 
         if (mapMode === MapModes.Select && isLeftMouseDown) {
             if (allowDrawMapCursor) {
@@ -607,6 +642,10 @@ function changeMapMode(desiredMode, toggleBehavior = false) {
         case MapModes.Suspend:
             mapMode = MapModes.Suspend;
             break;
+        case MapModes.Paste:
+            mapMode = MapModes.Paste;
+            mapCursorColor = cursorPasteModeColor;
+            break;
     }
 
     clearSelectModeCursor();
@@ -747,11 +786,12 @@ function clearMapCursor() {
 
 function drawSelectModeCursor(x, y, w, h) {
     let ctx = mapCanvas.getContext("2d");
-    ctx.lineWidth = 4;
-    ctx.beginPath();
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
     ctx.strokeStyle = mapCursorColor;
-    ctx.rect(x, y, w, h);
-    ctx.stroke();
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
 }
 
 function drawMapCursor(x, y) {
@@ -759,11 +799,12 @@ function drawMapCursor(x, y) {
     mapCursorPosition[0] = x;
     mapCursorPosition[1] = y;
     let ctx = mapCanvas.getContext("2d");
-    ctx.lineWidth = 4;
-    ctx.beginPath();
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
     ctx.strokeStyle = mapCursorColor;
-    ctx.rect(x, y, project.tileSize, project.tileSize);
-    ctx.stroke();
+    ctx.strokeRect(x, y, project.tileSize, project.tileSize);
+    ctx.restore();
 }
 
 // Updates the set layer dropdown
@@ -991,6 +1032,160 @@ function clearMapLayer() {
     }
 
     project.graphicalTileLayers[currentGraphicalTileLayer].values = [];
+    drawMap();
+}
+
+// Enter paste mode to place clipboard contents
+function enterPasteMode() {
+    if (!clipboardValue || !clipboardValue.values || clipboardValue.values.length === 0) {
+        DisplayMessage('Clipboard is empty', 1500, MessageType.Warning);
+        return;
+    }
+
+    previousModeBeforePaste = mapMode;
+    changeMapMode(MapModes.Paste);
+    DisplayMessage('Click to place tiles (Esc to cancel)', 2000, MessageType.Information);
+}
+
+// Exit paste mode
+function exitPasteMode(cancelled) {
+    clearPastePreview();
+    pastePreviewPosition = { x: -1, y: -1 };
+
+    if (cancelled) {
+        changeMapMode(previousModeBeforePaste);
+        DisplayMessage('Paste cancelled', 1000, MessageType.Information);
+    } else {
+        changeMapMode(MapModes.Select);
+    }
+}
+
+// Draw a semi-transparent preview of clipboard contents at cursor position
+function drawPastePreview(x, y) {
+    // Skip if position hasn't changed
+    if (pastePreviewPosition.x === x && pastePreviewPosition.y === y) {
+        return;
+    }
+
+    // Clear previous preview
+    clearPastePreview();
+
+    pastePreviewPosition = { x, y };
+
+    let ctx = mapCanvas.getContext("2d");
+
+    // Save context state
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+
+    // Draw each tile from clipboard at offset position
+    for (let i = 0; i < clipboardValue.values.length; i++) {
+        const tile = clipboardValue.values[i];
+        const destX = x + tile.X;
+        const destY = y + tile.Y;
+
+        // Skip tiles outside map bounds
+        if (destX < 0 || destY < 0 || destX >= project.mapWidth || destY >= project.mapHeight) {
+            continue;
+        }
+
+        ctx.drawImage(
+            tileSetSourceImage,
+            tile.TilesheetX,
+            tile.TilesheetY,
+            project.tileSize,
+            project.tileSize,
+            destX,
+            destY,
+            project.tileSize,
+            project.tileSize
+        );
+    }
+
+    // Restore context state
+    ctx.restore();
+
+    // Draw dashed rectangle outline around paste area
+    ctx.save();
+    ctx.strokeStyle = cursorPasteModeColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(x, y, clipboardValue.width, clipboardValue.height);
+    ctx.restore();
+}
+
+// Clear the paste preview by redrawing affected cells
+function clearPastePreview() {
+    if (pastePreviewPosition.x === -1 && pastePreviewPosition.y === -1) {
+        return;
+    }
+
+    // Redraw cells with a buffer around the paste area to clear outline strokes
+    const startX = pastePreviewPosition.x - project.tileSize;
+    const startY = pastePreviewPosition.y - project.tileSize;
+    const endX = pastePreviewPosition.x + clipboardValue.width + project.tileSize;
+    const endY = pastePreviewPosition.y + clipboardValue.height + project.tileSize;
+
+    for (let y = startY; y <= endY; y += project.tileSize) {
+        for (let x = startX; x <= endX; x += project.tileSize) {
+            drawCell(x, y);
+        }
+    }
+}
+
+// Execute the paste operation at the given position
+function executePaste(x, y) {
+    const removed = [];
+    const added = [];
+
+    for (let i = 0; i < clipboardValue.values.length; i++) {
+        const tile = clipboardValue.values[i];
+        const destX = x + tile.X;
+        const destY = y + tile.Y;
+
+        // Skip tiles outside map bounds
+        if (destX < 0 || destY < 0 || destX >= project.mapWidth || destY >= project.mapHeight) {
+            continue;
+        }
+
+        // Find existing tile at destination (for undo tracking)
+        const existingTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(
+            val => val.X === destX && val.Y === destY
+        );
+
+        if (existingTile) {
+            removed.push({ ...existingTile });
+        }
+
+        // Remove existing tile at destination
+        project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(
+            val => val.X !== destX || val.Y !== destY
+        );
+
+        // Add new tile from clipboard
+        const newTile = {
+            X: destX,
+            Y: destY,
+            TilesheetX: tile.TilesheetX,
+            TilesheetY: tile.TilesheetY
+        };
+        project.graphicalTileLayers[currentGraphicalTileLayer].values.push(newTile);
+        added.push({ ...newTile });
+    }
+
+    // Track for undo if any tiles were added
+    if (added.length > 0) {
+        pushAction({
+            type: ActionTypes.SELECTION_PASTE,
+            layerIndex: currentGraphicalTileLayer,
+            removed: removed,
+            added: added,
+            timestamp: Date.now()
+        });
+
+        DisplayMessage(`Pasted ${added.length} tile(s)`, 1500, MessageType.Information);
+    }
+
     drawMap();
 }
 
