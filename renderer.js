@@ -1,6 +1,20 @@
 import { DisplayMessage, MessageType } from './modules/messaging.js';
 import { FillFlood } from './modules/fillflood.js'
 import { PresentContext, SelectionModeOptions } from './modules/selectioncontext.js';
+import {
+    ActionTypes,
+    startBatch,
+    addToBatch,
+    finalizeBatch,
+    isBatchingActive,
+    pushAction,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clearHistory,
+    getActionDescription
+} from './modules/undoredo.js';
 
 //
 // Project Data
@@ -76,6 +90,9 @@ const cursorFillModeColor = "#6176ff";
 const defaultMapBackgroundColor = "#f4f8f9";
 let mapCursorColor = cursorDrawModeColor;
 
+// Platform detection for keyboard shortcuts
+const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
 //
 // Event Functions
 //
@@ -87,6 +104,31 @@ window.onload = (_) => {
 
 window.onkeydown = (event) => {
     if (!event.repeat) {
+        // Handle undo/redo shortcuts (work in all modes except Suspend)
+        const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+        if (modifierKey && mapMode !== MapModes.Suspend) {
+            if (event.key === 'z' || event.key === 'Z') {
+                if (event.shiftKey) {
+                    // Redo: Cmd+Shift+Z (Mac) or Ctrl+Shift+Z (Win)
+                    event.preventDefault();
+                    performRedo();
+                    return;
+                } else {
+                    // Undo: Cmd+Z (Mac) or Ctrl+Z (Win)
+                    event.preventDefault();
+                    performUndo();
+                    return;
+                }
+            }
+            // Redo: Ctrl+Y (Windows/Linux only)
+            if (!isMac && event.key === 'y') {
+                event.preventDefault();
+                performRedo();
+                return;
+            }
+        }
+
         if (mapMode !== MapModes.Suspend) {
             switch (event.key) {
                 case 'g':
@@ -186,6 +228,8 @@ mapCanvas.addEventListener("mouseup", (event) => {
     if (mapMode !== MapModes.Suspend) {
         if (event.button === 0) {
             isLeftMouseDown = false;
+            // Finalize any active batch when mouse is released
+            finalizeBatch();
             if (mapMode === MapModes.Select) {
                 mapMode = MapModes.Suspend;
                 PresentContext(event.clientX, event.clientY, mapCursorColor === cursorSelectModeTooLargeColor);
@@ -202,6 +246,8 @@ mapCanvas.addEventListener("mouseleave", () => {
     if (mapMode !== MapModes.Suspend) {
         isLeftMouseDown = false;
         isMiddleMouseDown = false;
+        // Finalize any active batch when mouse leaves canvas
+        finalizeBatch();
         allowDrawMapCursor = true;
         allowSetTile = true;
         lastSetTilePosition = [-1, -1];
@@ -227,7 +273,49 @@ mapCanvas.addEventListener("mousedown", (event) => {
                         return;
                     }
                 }
+
+                // Capture layer state before fill for undo
+                const beforeFill = project.graphicalTileLayers[currentGraphicalTileLayer].values.map(tile => ({ ...tile }));
+
                 FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile[0], selectedTile[1], mapCanvas.width, mapCanvas.height, targetTile);
+
+                // Capture layer state after fill
+                const afterFill = project.graphicalTileLayers[currentGraphicalTileLayer].values.map(tile => ({ ...tile }));
+
+                // Calculate what changed
+                const beforeMap = new Map(beforeFill.map(t => [`${t.X},${t.Y}`, t]));
+                const afterMap = new Map(afterFill.map(t => [`${t.X},${t.Y}`, t]));
+
+                const removed = [];
+                const added = [];
+
+                // Find removed or changed tiles
+                for (const [key, tile] of beforeMap) {
+                    const afterTile = afterMap.get(key);
+                    if (!afterTile || afterTile.TilesheetX !== tile.TilesheetX || afterTile.TilesheetY !== tile.TilesheetY) {
+                        removed.push(tile);
+                    }
+                }
+
+                // Find added or changed tiles
+                for (const [key, tile] of afterMap) {
+                    const beforeTile = beforeMap.get(key);
+                    if (!beforeTile || beforeTile.TilesheetX !== tile.TilesheetX || beforeTile.TilesheetY !== tile.TilesheetY) {
+                        added.push(tile);
+                    }
+                }
+
+                // Only push action if there were changes
+                if (removed.length > 0 || added.length > 0) {
+                    pushAction({
+                        type: ActionTypes.FILL_FLOOD,
+                        layerIndex: currentGraphicalTileLayer,
+                        removed: removed,
+                        added: added,
+                        timestamp: Date.now()
+                    });
+                }
+
                 drawMap();
             }
             else if (allowSetTile) {
@@ -247,6 +335,22 @@ mapCanvas.addEventListener("mousedown", (event) => {
         else if (event.button === 2) {
             if (mapMode === MapModes.Collision) {
                 let mouseCoords = getMouseCoordinatesOnMap(event);
+
+                // Capture collision tile before removal for undo
+                const existingCollision = project.collisionTiles.find(
+                    val => val.X === mouseCoords[0] && val.Y === mouseCoords[1]
+                );
+
+                if (existingCollision) {
+                    pushAction({
+                        type: ActionTypes.COLLISION_REMOVE,
+                        layerIndex: -1, // -1 indicates collision layer
+                        removed: [{ ...existingCollision }],
+                        added: [],
+                        timestamp: Date.now()
+                    });
+                }
+
                 removeCollisionTile(mouseCoords[0], mouseCoords[1]);
                 drawCell(mouseCoords[0], mouseCoords[1]);
                 drawMapCursor(mouseCoords[0], mouseCoords[1]);
@@ -294,11 +398,11 @@ mapCanvas.addEventListener('select-mode-option-selected', function (event) {
             break;
         case SelectionModeOptions.Cut:
             copySelectionToClipboard()
-            removedSelectedTilesFromMap();
+            removedSelectedTilesFromMap(ActionTypes.SELECTION_CUT);
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Delete:
-            removedSelectedTilesFromMap();
+            removedSelectedTilesFromMap(ActionTypes.SELECTION_DELETE);
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cancel:
@@ -313,10 +417,32 @@ mapCanvas.addEventListener('select-mode-option-selected', function (event) {
     }
 });
 
-function removedSelectedTilesFromMap() {
+function removedSelectedTilesFromMap(actionType) {
+    const removedTiles = [];
+
     for (let i = 0; i < selectedRect.cells.length; i++) {
+        // Find and capture the tile before removing it
+        const existingTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(
+            val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y
+        );
+
+        if (existingTile) {
+            removedTiles.push({ ...existingTile });
+        }
+
         project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== selectedRect.cells[i].x || val.Y !== selectedRect.cells[i].y);
         drawCell(selectedRect.cells[i].x, selectedRect.cells[i].y);
+    }
+
+    // Track for undo if any tiles were removed
+    if (removedTiles.length > 0) {
+        pushAction({
+            type: actionType,
+            layerIndex: currentGraphicalTileLayer,
+            removed: removedTiles,
+            added: [],
+            timestamp: Date.now()
+        });
     }
 }
 
@@ -540,6 +666,7 @@ window.electronAPI.onSaveCompleted((_, value) => {
 // Event handler for when a request to load a project from a file is recieved.
 window.electronAPI.loadProjectFromFile((_, value) => {
     project = value;
+    clearHistory(); // Clear undo/redo history for new project
     applyMapDimensions();
     applyMapBackgroundColor();
     updateGraphicalTileLayers();
@@ -559,6 +686,7 @@ window.electronAPI.loadNewProject((_, value) => {
         backgroundColor: defaultMapBackgroundColor
     };
 
+    clearHistory(); // Clear undo/redo history for new project
     applyMapDimensions();
     applyMapBackgroundColor();
     updateGraphicalTileLayers();
@@ -673,15 +801,46 @@ function selectTile(x, y) {
 // Handler for placing new tiles on the map
 function setTile(mouseX, mouseY) {
     if (mapMode === MapModes.Brush || mapMode === MapModes.Eraser) {
+        // Find and capture existing tile before removal
+        const existingTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(
+            val => val.X === mouseX && val.Y === mouseY
+        );
+
+        // Start batch if not already batching
+        const actionType = mapMode === MapModes.Brush ? ActionTypes.TILE_PAINT : ActionTypes.TILE_ERASE;
+        if (!isBatchingActive()) {
+            startBatch(actionType, currentGraphicalTileLayer);
+        }
+
+        // Remove existing tile
         project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
 
+        let newTile = null;
         if (mapMode === MapModes.Brush) {
-            project.graphicalTileLayers[currentGraphicalTileLayer].values.push({ X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] });
+            newTile = { X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] };
+            project.graphicalTileLayers[currentGraphicalTileLayer].values.push(newTile);
         }
+
+        // Track the change for undo
+        addToBatch(existingTile || null, newTile);
     }
     else if (mapMode === MapModes.Collision) {
+        // Find existing collision tile
+        const existingCollision = project.collisionTiles.find(
+            val => val.X === mouseX && val.Y === mouseY
+        );
+
+        // Start batch if not already batching
+        if (!isBatchingActive()) {
+            startBatch(ActionTypes.COLLISION_ADD, -1); // -1 indicates collision layer
+        }
+
         removeCollisionTile(mouseX, mouseY);
-        project.collisionTiles.push({ X: mouseX, Y: mouseY });
+        const newCollision = { X: mouseX, Y: mouseY };
+        project.collisionTiles.push(newCollision);
+
+        // Track the change for undo
+        addToBatch(existingCollision || null, newCollision);
     }
 
     lastSetTilePosition = [mouseX, mouseY];
@@ -818,8 +977,158 @@ function drawCollisionTiles() {
 
 // Reset state to empty
 function clearMapLayer() {
+    // Capture all tiles before clearing for undo
+    const removedTiles = project.graphicalTileLayers[currentGraphicalTileLayer].values.map(tile => ({ ...tile }));
+
+    if (removedTiles.length > 0) {
+        pushAction({
+            type: ActionTypes.CLEAR_LAYER,
+            layerIndex: currentGraphicalTileLayer,
+            removed: removedTiles,
+            added: [],
+            timestamp: Date.now()
+        });
+    }
+
     project.graphicalTileLayers[currentGraphicalTileLayer].values = [];
     drawMap();
+}
+
+// Perform undo operation
+function performUndo() {
+    // Finalize any active batch first
+    finalizeBatch();
+
+    if (!canUndo()) {
+        DisplayMessage('Nothing to undo', 1000, MessageType.Information);
+        return;
+    }
+
+    const action = undo();
+    if (!action) return;
+
+    applyUndoAction(action);
+
+    const description = getActionDescription(action.type);
+    DisplayMessage(`Undo: ${description}`, 1000, MessageType.Information);
+}
+
+// Perform redo operation
+function performRedo() {
+    if (!canRedo()) {
+        DisplayMessage('Nothing to redo', 1000, MessageType.Information);
+        return;
+    }
+
+    const action = redo();
+    if (!action) return;
+
+    applyRedoAction(action);
+
+    const description = getActionDescription(action.type);
+    DisplayMessage(`Redo: ${description}`, 1000, MessageType.Information);
+}
+
+// Apply an undo action (reverse the changes)
+function applyUndoAction(action) {
+    if (action.layerIndex === -1) {
+        // Collision layer
+        // Remove added tiles
+        for (const tile of action.added) {
+            project.collisionTiles = project.collisionTiles.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+        }
+        // Restore removed tiles
+        for (const tile of action.removed) {
+            // Remove any existing at this position first (shouldn't exist, but be safe)
+            project.collisionTiles = project.collisionTiles.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+            project.collisionTiles.push({ ...tile });
+        }
+
+        // Redraw affected cells if in collision mode
+        if (mapMode === MapModes.Collision) {
+            drawMap();
+            drawCollisionTiles();
+        }
+    } else {
+        // Graphical layer
+        const layer = project.graphicalTileLayers[action.layerIndex];
+
+        // Remove added tiles
+        for (const tile of action.added) {
+            layer.values = layer.values.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+        }
+
+        // Restore removed tiles
+        for (const tile of action.removed) {
+            // Remove any existing at this position first
+            layer.values = layer.values.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+            layer.values.push({ ...tile });
+        }
+
+        drawMap();
+        if (mapMode === MapModes.Collision) {
+            drawCollisionTiles();
+        }
+    }
+}
+
+// Apply a redo action (reapply the changes)
+function applyRedoAction(action) {
+    if (action.layerIndex === -1) {
+        // Collision layer
+        // Remove the tiles that were originally removed
+        for (const tile of action.removed) {
+            project.collisionTiles = project.collisionTiles.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+        }
+        // Add the tiles that were originally added
+        for (const tile of action.added) {
+            // Remove any existing at this position first
+            project.collisionTiles = project.collisionTiles.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+            project.collisionTiles.push({ ...tile });
+        }
+
+        // Redraw affected cells if in collision mode
+        if (mapMode === MapModes.Collision) {
+            drawMap();
+            drawCollisionTiles();
+        }
+    } else {
+        // Graphical layer
+        const layer = project.graphicalTileLayers[action.layerIndex];
+
+        // Remove the tiles that were originally removed
+        for (const tile of action.removed) {
+            layer.values = layer.values.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+        }
+
+        // Add the tiles that were originally added
+        for (const tile of action.added) {
+            // Remove any existing at this position first
+            layer.values = layer.values.filter(
+                t => t.X !== tile.X || t.Y !== tile.Y
+            );
+            layer.values.push({ ...tile });
+        }
+
+        drawMap();
+        if (mapMode === MapModes.Collision) {
+            drawCollisionTiles();
+        }
+    }
 }
 
 // Initializes the tileset selection container with a single canvas to avoid GPU memory exhaustion
