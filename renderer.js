@@ -137,6 +137,16 @@ window.onkeydown = (event) => {
                 enterPasteMode();
                 return;
             }
+            // Ctrl+1/2/3 or Cmd+1/2/3 for layer switching
+            if (['1', '2', '3'].includes(event.key)) {
+                event.preventDefault();
+                const layerIndex = parseInt(event.key) - 1;
+                if (layerIndex < project.graphicalTileLayers.length) {
+                    graphicalLayerSelect.value = layerIndex;
+                    setGraphicalTileLayer(layerIndex);
+                }
+                return;
+            }
         }
 
         if (mapMode !== MapModes.Suspend && mapMode !== MapModes.Paste) {
