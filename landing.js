@@ -4,6 +4,10 @@ let newProjectButton = document.getElementById('new-project-button');
 let loadProjectButton = document.getElementById('load-project-button');
 let quitButton = document.getElementById('quit-button');
 
+let newProjectLabel = document.getElementById('new-project-label');
+let loadProjectLabel = document.getElementById('load-project-label');
+let quitLabel = document.getElementById('quit-label');
+
 let landingMenuCard = document.getElementById('landing-menu-card');
 let newProjectCard = document.getElementById('new-project-card');
 
@@ -71,6 +75,10 @@ loadProjectButton.addEventListener('click', async () => {
 quitButton.addEventListener('click', async () => {
     await window.electronAPI.quitApp();
 });
+
+newProjectLabel.addEventListener('click', () => newProjectButton.click());
+loadProjectLabel.addEventListener('click', () => loadProjectButton.click());
+quitLabel.addEventListener('click', () => quitButton.click());
 
 function projectCreateFormIsValid() {
     let isValid = true;

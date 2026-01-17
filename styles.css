@@ -358,6 +358,37 @@ fieldset {
    padding: 10px;
 }
 
+.landing-button-container {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 8px;
+}
+
+.button-label {
+   font-size: 13px;
+   font-weight: 600;
+   text-align: center;
+   padding: 4px 12px;
+   border-radius: 4px;
+   color: #fff;
+   cursor: pointer;
+}
+
+/* Match label background to button type */
+.primary-button + .button-label {
+   background: #3d6ed4;
+}
+
+.secondary-button + .button-label {
+   background: #f9d339;
+   color: #111;
+}
+
+.exit-button + .button-label {
+   background: #b33232;
+}
+
 .new-project-menu-card {
    display: none;
    height: 92vh;
