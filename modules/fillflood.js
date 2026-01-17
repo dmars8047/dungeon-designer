@@ -1,51 +1,67 @@
 // Algorithm Description: https://en.wikipedia.org/wiki/Flood_fill
-// Using unoptimized scanning version. I dont understand the optimized one.
-export function FillFlood(x, y, layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight, targetTile = null) {
-    if (!IsInside(x, y, layerNodes, mapWidth, mapHeight, targetTile)) {
-        return;
-    }
+// Optimized version using Map/Set for O(1) lookups instead of array scans
 
-    if (layerNodes.length === 0) {
+export function FillFlood(x, y, layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight, targetTile = null) {
+    if (layerNodes.length === 0 && !targetTile) {
         JustFillIt(layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight);
         return;
     }
 
-    let stack = [];
+    // Build lookup map for O(1) coordinate checks
+    const tileMap = new Map();
+    for (const node of layerNodes) {
+        const key = `${node.X},${node.Y}`;
+        tileMap.set(key, node);
+    }
 
+    // Track filled positions to avoid redundant work
+    const filled = new Set();
+
+    if (!IsInside(x, y, tileMap, mapWidth, mapHeight, targetTile)) {
+        return;
+    }
+
+    const stack = [];
     stack.push({ X: x, Y: y });
 
     while (stack.length > 0) {
-        let stackObject = stack[stack.length - 1];
-        stack.pop();
+        const stackObject = stack.pop();
         let lx = stackObject.X;
-        while (IsInside(lx - tileSize, stackObject.Y, layerNodes, mapWidth, mapHeight, targetTile)) {
-            Set(lx - tileSize, stackObject.Y, layerNodes, tileSheetX, tileSheetY, targetTile);
+
+        while (IsInside(lx - tileSize, stackObject.Y, tileMap, mapWidth, mapHeight, targetTile)) {
+            SetTile(lx - tileSize, stackObject.Y, tileMap, filled, tileSheetX, tileSheetY, targetTile);
             lx = lx - tileSize;
         }
-        while (IsInside(stackObject.X, stackObject.Y, layerNodes, mapWidth, mapHeight, targetTile)) {
-            Set(stackObject.X, stackObject.Y, layerNodes, tileSheetX, tileSheetY, targetTile);
+
+        while (IsInside(stackObject.X, stackObject.Y, tileMap, mapWidth, mapHeight, targetTile)) {
+            SetTile(stackObject.X, stackObject.Y, tileMap, filled, tileSheetX, tileSheetY, targetTile);
             stackObject.X = stackObject.X + tileSize;
         }
-        Scan(lx, stackObject.X - tileSize, stackObject.Y + tileSize, stack, tileSize, layerNodes, mapWidth, mapHeight, targetTile);
-        Scan(lx, stackObject.X - tileSize, stackObject.Y - tileSize, stack, tileSize, layerNodes, mapWidth, mapHeight, targetTile);
+
+        Scan(lx, stackObject.X - tileSize, stackObject.Y + tileSize, stack, tileSize, tileMap, mapWidth, mapHeight, targetTile);
+        Scan(lx, stackObject.X - tileSize, stackObject.Y - tileSize, stack, tileSize, tileMap, mapWidth, mapHeight, targetTile);
     }
 
-    return;
+    // Sync changes back to the original array
+    layerNodes.length = 0;
+    for (const node of tileMap.values()) {
+        layerNodes.push(node);
+    }
 }
 
 function JustFillIt(layerNodes, tileSize, tileSheetX, tileSheetY, mapWidth, mapHeight) {
     for (let i = 0; i < mapHeight; i += tileSize) {
         for (let j = 0; j < mapWidth; j += tileSize) {
-            Set(j, i, layerNodes, tileSheetX, tileSheetY, null);
+            layerNodes.push({ X: j, Y: i, TilesheetX: tileSheetX, TilesheetY: tileSheetY });
         }
     }
 }
 
-function Scan(lx, rx, y, stack, tileSize, layerNodes, mapWidth, mapHeight, targetTile) {
+function Scan(lx, rx, y, stack, tileSize, tileMap, mapWidth, mapHeight, targetTile) {
     let span_added = false;
 
     for (let x = lx; x <= rx; x += tileSize) {
-        if (!IsInside(x, y, layerNodes, mapWidth, mapHeight, targetTile)) {
+        if (!IsInside(x, y, tileMap, mapWidth, mapHeight, targetTile)) {
             span_added = false;
         }
         else if (!span_added) {
@@ -55,7 +71,7 @@ function Scan(lx, rx, y, stack, tileSize, layerNodes, mapWidth, mapHeight, targe
     }
 }
 
-function IsInside(x, y, layerNodes, mapWidth, mapHeight, targetTile) {
+function IsInside(x, y, tileMap, mapWidth, mapHeight, targetTile) {
     if (x >= mapWidth || y >= mapHeight) {
         return false;
     }
@@ -64,20 +80,34 @@ function IsInside(x, y, layerNodes, mapWidth, mapHeight, targetTile) {
         return false;
     }
 
+    const key = `${x},${y}`;
+    const existingTile = tileMap.get(key);
+
     if (!targetTile) {
-        return !layerNodes.some(val => val.X === x && val.Y === y);
+        // When no targetTile, we can fill empty spaces (where no tile exists)
+        return !existingTile;
     }
     else {
-        return layerNodes.some(val => val.X === x && val.Y === y && val.TilesheetX === targetTile.X && val.TilesheetY === targetTile.Y);
+        // When targetTile specified, we can fill tiles that match the target
+        return existingTile &&
+               existingTile.TilesheetX === targetTile.X &&
+               existingTile.TilesheetY === targetTile.Y;
     }
 }
 
-function Set(x, y, layerNodes, tileSheetX, tileSheetY, targetTile) {
-    if (targetTile) {
-        let index = layerNodes.findIndex(val => val.X === x && val.Y === y && val.TilesheetX === targetTile.X && val.TilesheetY === targetTile.Y);
-        layerNodes[index] = { X: x, Y: y, TilesheetX: tileSheetX, TilesheetY: tileSheetY };
+function SetTile(x, y, tileMap, filled, tileSheetX, tileSheetY, targetTile) {
+    const key = `${x},${y}`;
+
+    // Skip if already filled in this operation
+    if (filled.has(key)) {
+        return;
     }
-    else {
-        layerNodes.push({ X: x, Y: y, TilesheetX: tileSheetX, TilesheetY: tileSheetY });
-    }
+
+    filled.add(key);
+
+    // Create the new tile
+    const newTile = { X: x, Y: y, TilesheetX: tileSheetX, TilesheetY: tileSheetY };
+
+    // Update the map (either replacing existing tile or adding new one)
+    tileMap.set(key, newTile);
 }
