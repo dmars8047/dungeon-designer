@@ -14,6 +14,11 @@ const landingPageDimensions = {
   height: 292
 }
 
+const projectCreationPageDimensions = {
+  width: 800,
+  height: 800
+}
+
 function createLandingWindow() {
   landingWindow = new BrowserWindow({
     width: landingPageDimensions.width,
@@ -239,7 +244,7 @@ async function handleSetExportDirectoryRequest() {
 }
 
 async function handleNewProjectCreationScreenEntered() {
-  landingWindow.setSize(800, 720);
+  landingWindow.setSize(projectCreationPageDimensions.width, projectCreationPageDimensions.height);
   landingWindow.center();
 }
 

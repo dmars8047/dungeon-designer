@@ -680,7 +680,7 @@ window.electronAPI.loadNewProject((_, value) => {
         tileSize: value.tileSize,
         mapWidth: value.mapWidth,
         mapHeight: value.mapHeight,
-        graphicalTileLayers: [{ name: value.layerNames[0], index: 0, values: [] }, { name: value.layerNames[1], index: 1, values: [] }],
+        graphicalTileLayers: [{ name: value.layerNames[0], index: 0, values: [] }, { name: value.layerNames[1], index: 1, values: [] }, { name: value.layerNames[2], index: 2, values: [] }],
         collisionTiles: [],
         tilesetImagePath: value.tilesetImagePath,
         backgroundColor: defaultMapBackgroundColor
