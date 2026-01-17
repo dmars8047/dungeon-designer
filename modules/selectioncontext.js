@@ -13,7 +13,7 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
     let contextMenuContainer = document.createElement("div");
     contextMenuContainer.style.cursor = "pointer";
     contextMenuContainer.id = contextMenuId;
-    contextMenuContainer.style.width = "160px";
+    contextMenuContainer.style.width = "200px";
     contextMenuContainer.style.height = "80px";
     contextMenuContainer.style.position = "absolute";
     contextMenuContainer.style.left = `${mouseX - 16}px`;
@@ -23,7 +23,7 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
 
     if (!selectionOverMax) {
         let copyMenuItem = document.createElement("div");
-        copyMenuItem.innerText = "Copy to Prefab";
+        copyMenuItem.innerText = "Copy to Clipboard";
         copyMenuItem.classList.add(contextMenuItemHoverHackCssClass);
         copyMenuItem.onmouseleave = () => {
             copyMenuItem.classList.remove(contextMenuItemHoverHackCssClass);
@@ -33,7 +33,7 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
         contextMenuContainer.appendChild(copyMenuItem);
 
         let cutMenuItem = document.createElement("div");
-        cutMenuItem.innerText = "Cut To Prefab";
+        cutMenuItem.innerText = "Cut To Clipboard";
         cutMenuItem.classList.add(contextMenuItemCssClass);
         cutMenuItem.onclick = () => SelectionMade(SelectionModeOptions.Cut);
         contextMenuContainer.appendChild(cutMenuItem);

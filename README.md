@@ -11,7 +11,7 @@ A 2D tile-based map editor for creating game levels. Design dungeon maps, platfo
 - **Multi-Layer Editing** - Background and foreground tile layers for depth
 - **Tileset Import** - Load any PNG tilesheet image
 - **Editing Tools** - Brush, eraser, selection, collision marking, and flood fill
-- **Prefab System** - Copy and paste tile regions for repeated patterns
+- **Clipboard System** - Copy and paste tile regions for repeated patterns
 - **Collision Data** - Mark collision zones for game physics
 - **Multiple Export Formats** - JSON and custom game format (.bro)
 - **Project Files** - Save and load projects as .ddes files
@@ -62,16 +62,16 @@ npm start
 
 Use the layer dropdown to switch between **Background** and **Foreground** layers. Each layer can be edited and cleared independently, allowing you to create depth in your maps.
 
-### Selection & Prefabs
+### Selection & Clipboards
 
 1. Select the **Select Tool** (`Q`)
 2. Click and drag to create a rectangular selection
 3. Right-click the selection to open the context menu:
-   - **Copy to Prefab** - Copy tiles to prefab buffer
-   - **Cut to Prefab** - Cut tiles to prefab buffer
+   - **Copy to Clipboard** - Copy tiles to clipboard buffer
+   - **Cut to Clipboard** - Cut tiles to clipboard buffer
    - **Delete** - Remove selected tiles
 
-Once you have a prefab, switch to the Brush tool to paint it onto the map.
+Once you have a clipboard, switch to the Brush tool to paint it onto the map.
 
 ### Canvas Navigation
 

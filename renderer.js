@@ -40,6 +40,11 @@ let isMiddleMouseDown = false;
 let grabPosition = {}; // helps with dragging
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
 
+// Tileset selector (single canvas approach to avoid GPU memory exhaustion)
+let tilesetSelectorCanvas;  // Single canvas for tileset display
+let tilesetSelectorCtx;     // Its 2D context
+let hoveredTile = null;     // Track hovered tile for visual feedback
+
 const MapModes = {
     Brush: 0,
     Eraser: 1,
@@ -54,7 +59,7 @@ let mapMode = MapModes.Brush;
 let mapCursorPosition = [-1, -1];
 let lastSetTilePosition = [-1, -1];
 let selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
-let prefabValue = { width: 0, height: 0, values: [] };
+let clipboardValue = { width: 0, height: 0, values: [] };
 let allowDrawMapCursor = true;
 let allowSetTile = true;
 
@@ -284,11 +289,11 @@ mapCanvas.addEventListener('select-mode-option-selected', function (event) {
 
     switch (event.detail) {
         case SelectionModeOptions.Copy:
-            copySelectionToPrefab();
+            copySelectionToClipboard();
             changeMapMode(MapModes.Select);
             break;
         case SelectionModeOptions.Cut:
-            copySelectionToPrefab()
+            copySelectionToClipboard()
             removedSelectedTilesFromMap();
             changeMapMode(MapModes.Select);
             break;
@@ -347,18 +352,18 @@ function drawSelectionArea(mouseCoords) {
     }
 }
 
-function copySelectionToPrefab() {
+function copySelectionToClipboard() {
     if (selectedRect && selectedRect.cells && selectedRect.cells.length > 0) {
 
-        const prefabContainer = document.getElementById('prefab-container');
+        const clipboardContainer = document.getElementById('clipboard-container');
 
-        const prefabCanvas = document.createElement("canvas");
-        prefabCanvas.width = selectedRect.width;
-        prefabCanvas.height = selectedRect.height;
-        prefabCanvas.classList.add('tile-canvas');
-        prefabCanvas.id = "prefab-canvas";
+        const clipboardCanvas = document.createElement("canvas");
+        clipboardCanvas.width = selectedRect.width;
+        clipboardCanvas.height = selectedRect.height;
+        clipboardCanvas.classList.add('tile-canvas');
+        clipboardCanvas.id = "clipboard-canvas";
         // newCanvas.onclick = () => { selectTile(x, y); changeMapMode(MapModes.Brush); };
-        let ctx = prefabCanvas.getContext("2d");
+        let ctx = clipboardCanvas.getContext("2d");
 
         let cells = [];
 
@@ -376,13 +381,13 @@ function copySelectionToPrefab() {
         }
 
         if (cells.length > 0) {
-            prefabValue = { height: selectedRect.height, width: selectedRect.width, values: cells };
+            clipboardValue = { height: selectedRect.height, width: selectedRect.width, values: cells };
 
-            while (prefabContainer.firstChild) {
-                prefabContainer.removeChild(prefabContainer.firstChild);
+            while (clipboardContainer.firstChild) {
+                clipboardContainer.removeChild(clipboardContainer.firstChild);
             }
 
-            prefabContainer.append(prefabCanvas);
+            clipboardContainer.append(clipboardCanvas);
         }
     }
 }
@@ -661,18 +666,8 @@ function applyMapBackgroundColor() {
 
 // Sets the selected tileset
 function selectTile(x, y) {
-    let oldCanvas = document.getElementById("tile-selection-canvas-" + selectedTile[0] + "-" + selectedTile[1]);
-    let newCanvas = document.getElementById("tile-selection-canvas-" + x + "-" + y);
-
-    if (oldCanvas != null && oldCanvas.classList != null) {
-        if (oldCanvas.classList.contains("selected-tile")) {
-            oldCanvas.classList.remove("selected-tile");
-        }
-    }
-
     selectedTile = [x, y];
-    selectTile.classList = [];
-    newCanvas.classList.add("selected-tile");
+    drawTilesetSelector();
 }
 
 // Handler for placing new tiles on the map
@@ -827,19 +822,78 @@ function clearMapLayer() {
     drawMap();
 }
 
-// Initializes the tileset selection container with selectable canvases which represent individual tiles
+// Initializes the tileset selection container with a single canvas to avoid GPU memory exhaustion
 function initTileSelector() {
-    for (let y = 0; y < tileSetSourceImage.height; y += project.tileSize) {
-        for (let x = 0; x < tileSetSourceImage.width; x += project.tileSize) {
-            const newCanvas = document.createElement("canvas");
-            newCanvas.width = project.tileSize;
-            newCanvas.height = project.tileSize;
-            newCanvas.classList.add('tile-canvas');
-            newCanvas.id = "tile-selection-canvas-" + x + "-" + y;
-            newCanvas.onclick = () => { selectTile(x, y); changeMapMode(MapModes.Brush); };
-            let ctx = newCanvas.getContext("2d");
-            ctx.drawImage(tileSetSourceImage, x, y, project.tileSize, project.tileSize, 0, 0, project.tileSize, project.tileSize);
-            tilesetContainer.append(newCanvas);
+    // Clear existing content
+    tilesetContainer.innerHTML = '';
+
+    // Create single canvas
+    tilesetSelectorCanvas = document.createElement("canvas");
+    tilesetSelectorCanvas.id = "tileset-selector-canvas";
+    tilesetSelectorCanvas.width = tileSetSourceImage.width;
+    tilesetSelectorCanvas.height = tileSetSourceImage.height;
+    tilesetSelectorCtx = tilesetSelectorCanvas.getContext("2d");
+
+    // Draw tileset and initial selection
+    drawTilesetSelector();
+
+    // Click handler - calculate tile from coordinates
+    tilesetSelectorCanvas.onclick = (e) => {
+        const rect = tilesetSelectorCanvas.getBoundingClientRect();
+        const scaleX = tilesetSelectorCanvas.width / rect.width;
+        const scaleY = tilesetSelectorCanvas.height / rect.height;
+        const x = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize) * project.tileSize;
+        const y = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize) * project.tileSize;
+        selectTile(x, y);
+        changeMapMode(MapModes.Brush);
+    };
+
+    // Hover handler for visual feedback
+    tilesetSelectorCanvas.onmousemove = (e) => {
+        const rect = tilesetSelectorCanvas.getBoundingClientRect();
+        const scaleX = tilesetSelectorCanvas.width / rect.width;
+        const scaleY = tilesetSelectorCanvas.height / rect.height;
+        const x = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize) * project.tileSize;
+        const y = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize) * project.tileSize;
+        if (hoveredTile === null || hoveredTile[0] !== x || hoveredTile[1] !== y) {
+            hoveredTile = [x, y];
+            drawTilesetSelector();
         }
+    };
+
+    tilesetSelectorCanvas.onmouseleave = () => {
+        hoveredTile = null;
+        drawTilesetSelector();
+    };
+
+    tilesetContainer.appendChild(tilesetSelectorCanvas);
+}
+
+// Renders the tileset image with selection and hover highlights
+function drawTilesetSelector() {
+    // Clear canvas to remove previous highlights
+    tilesetSelectorCtx.clearRect(0, 0, tilesetSelectorCanvas.width, tilesetSelectorCanvas.height);
+
+    // Draw base tileset image
+    tilesetSelectorCtx.drawImage(tileSetSourceImage, 0, 0);
+
+    // Draw hover highlight (subtle)
+    if (hoveredTile !== null) {
+        tilesetSelectorCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        tilesetSelectorCtx.lineWidth = 2;
+        tilesetSelectorCtx.strokeRect(
+            hoveredTile[0] + 1, hoveredTile[1] + 1,
+            project.tileSize - 2, project.tileSize - 2
+        );
+    }
+
+    // Draw selection highlight (yellow border matching .selected-tile)
+    if (selectedTile[0] >= 0 && selectedTile[1] >= 0) {
+        tilesetSelectorCtx.strokeStyle = '#fad644';
+        tilesetSelectorCtx.lineWidth = 3;
+        tilesetSelectorCtx.strokeRect(
+            selectedTile[0], selectedTile[1],
+            project.tileSize, project.tileSize
+        );
     }
 }

@@ -55,14 +55,14 @@ body {
    box-sizing: border-box;
 }
 
-#prefab-header {
+#clipboard-header {
    height: 5%;
    border-right: 1px solid #969da8;
    border-left: 1px solid #969da8;
    border-bottom: 1px solid #969da8;
 }
 
-#prefab-container {
+#clipboard-container {
    display: flex;
    min-height: 256px;
    min-width: 256px;
@@ -74,7 +74,7 @@ body {
    box-sizing: border-box;
 }
 
-#prefab-container>canvas {
+#clipboard-container>canvas {
    margin: auto;
 }
 
@@ -109,6 +109,11 @@ body {
 
 .tile-canvas:hover {
    transform: scale(1.1);
+}
+
+#tileset-selector-canvas {
+   width: 100%;
+   cursor: pointer;
 }
 
 .main-console {
