@@ -50,6 +50,7 @@ npm start
 
 ### Tools & Keyboard Shortcuts
 
+#### Tools
 | Tool | Shortcut | Description |
 |------|----------|-------------|
 | Brush | `B` | Paint tiles from the tileset onto the map |
@@ -58,9 +59,23 @@ npm start
 | Collision | `C` | Mark tiles as collision zones |
 | Fill | `G` | Flood-fill connected empty areas with selected tile |
 
+#### General Shortcuts
+| Action | Windows/Linux | Mac |
+|--------|---------------|-----|
+| Undo | `Ctrl+Z` | `Cmd+Z` |
+| Redo | `Ctrl+Shift+Z` or `Ctrl+Y` | `Cmd+Shift+Z` |
+| Paste | `Ctrl+V` | `Cmd+V` |
+| Save Project | `Ctrl+S` | `Cmd+S` |
+| Layer 1 | `Ctrl+1` | `Cmd+1` |
+| Layer 2 | `Ctrl+2` | `Cmd+2` |
+| Layer 3 | `Ctrl+3` | `Cmd+3` |
+| Project Settings | `P` | `P` |
+| Export | `O` | `O` |
+| Cancel/Close | `Escape` | `Escape` |
+
 ### Layer Management
 
-Use the layer dropdown to switch between **Background** and **Foreground** layers. Each layer can be edited and cleared independently, allowing you to create depth in your maps.
+Use the layer dropdown or keyboard shortcuts (`Ctrl+1/2/3` or `Cmd+1/2/3` on Mac) to switch between layers. Each layer can be edited and cleared independently, allowing you to create depth in your maps.
 
 ### Selection & Clipboards
 
