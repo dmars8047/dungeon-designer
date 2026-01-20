@@ -41,6 +41,7 @@ let brushToolButton = document.getElementById('brush-tool-btn');
 let collisionToolButton = document.getElementById('collision-tool-btn');
 let fillToolButton = document.getElementById('fill-tool-btn');
 let saveButton = document.getElementById('save-btn');
+let exportToolButton = document.getElementById('export-btn');
 let projectSettingsApplyButton = document.getElementById('project-settings-apply-button');
 
 
@@ -226,6 +227,10 @@ collisionToolButton.onclick = () => {
 
 saveButton.onclick = async () => {
     await callProjectSave();
+}
+
+exportToolButton.onclick = () => {
+    toggleExportModal(true);
 }
 
 async function callProjectSave() {
@@ -744,6 +749,7 @@ window.electronAPI.loadNewProject((_, value) => {
 });
 
 window.electronAPI.exportComplete((_, value) => {
+    toggleExportModal(false);
     DisplayMessage(`Export to [${value}] Complete.`)
 });
 
