@@ -154,12 +154,53 @@ async function handleExportProject(payload) {
 
   if (payload.format === "JSON") {
     try {
-      if (payload.projectData.graphicalTileLayers[0].values.length > 0)
-        await fs.writeFile(payload.exportDirectory + "/background-tiles.json", JSON.stringify(payload.projectData.graphicalTileLayers[0]));
-      if (payload.projectData.graphicalTileLayers[1].values.length > 0)
-        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.json", JSON.stringify(payload.projectData.graphicalTileLayers[1]));
-      if (payload.projectData.collisionTiles.length > 0)
-        await fs.writeFile(payload.exportDirectory + "/collision-tiles.json", JSON.stringify(payload.projectData.collisionTiles));
+      // Build a map of all unique positions
+      const tileMap = new Map();
+
+      // Helper to get or create tile entry
+      const getOrCreateTile = (x, y) => {
+        const key = `${x},${y}`;
+        if (!tileMap.has(key)) {
+          tileMap.set(key, {
+            x,
+            y,
+            graphical_data: [null, null, null],
+            collidable: false
+          });
+        }
+        return tileMap.get(key);
+      };
+
+      // Process each graphical layer (0=background, 1=middle, 2=foreground)
+      for (let layerIndex = 0; layerIndex < 3; layerIndex++) {
+        for (const tile of payload.projectData.graphicalTileLayers[layerIndex].values) {
+          const entry = getOrCreateTile(tile.X, tile.Y);
+          entry.graphical_data[layerIndex] = {
+            TilesheetX: tile.TilesheetX,
+            TilesheetY: tile.TilesheetY
+          };
+        }
+      }
+
+      // Process collision tiles
+      for (const tile of payload.projectData.collisionTiles) {
+        const entry = getOrCreateTile(tile.X, tile.Y);
+        entry.collidable = true;
+      }
+
+      // Build final export object
+      const exportData = {
+        projectName: payload.projectData.name,
+        tileSize: payload.projectData.tileSize,
+        mapWidth: payload.projectData.mapWidth,
+        mapHeight: payload.projectData.mapHeight,
+        layerOrder: ["background", "middle", "foreground"],
+        tiles: Array.from(tileMap.values())
+      };
+
+      const filename = `${payload.projectData.name}-map-data.json`;
+      await fs.writeFile(payload.exportDirectory + "/" + filename, JSON.stringify(exportData, null, 2));
+
     } catch (err) {
       console.error(err);
     }
@@ -181,11 +222,23 @@ async function handleExportProject(payload) {
       }
 
       if (payload.projectData.graphicalTileLayers[1].values.length > 0) {
-        let foregroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: FOREGROUND_TILES\n`;
-        foregroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+        let middleTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: MIDDLE_TILES\n`;
+        middleTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
 
         for (let i = 0; i < payload.projectData.graphicalTileLayers[1].values.length; i++) {
           let tile = payload.projectData.graphicalTileLayers[1].values[i];
+          middleTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
+        }
+
+        await fs.writeFile(payload.exportDirectory + "/middle-tiles.bro", middleTileContent);
+      }
+
+      if (payload.projectData.graphicalTileLayers[2].values.length > 0) {
+        let foregroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: FOREGROUND_TILES\n`;
+        foregroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+
+        for (let i = 0; i < payload.projectData.graphicalTileLayers[2].values.length; i++) {
+          let tile = payload.projectData.graphicalTileLayers[2].values[i];
           foregroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
         }
 
