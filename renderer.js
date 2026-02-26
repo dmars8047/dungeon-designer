@@ -148,6 +148,12 @@ window.onkeydown = (event) => {
                 }
                 return;
             }
+            // Ctrl+S / Cmd+S for save
+            if (event.key === 's' || event.key === 'S') {
+                event.preventDefault();
+                callProjectSave();
+                return;
+            }
         }
 
         if (mapMode !== MapModes.Suspend && mapMode !== MapModes.Paste) {
@@ -172,10 +178,6 @@ window.onkeydown = (event) => {
                     break;
                 case 'q':
                     changeMapMode(MapModes.Select);
-                    break;
-                case 's':
-                    if (event.ctrlKey)
-                        callProjectSave();
                     break;
             }
         }
