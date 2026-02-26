@@ -24,7 +24,7 @@ function createLandingWindow() {
     width: landingPageDimensions.width,
     height: landingPageDimensions.height,
     show: true,
-    icon: './Assets/dungeondesignericon.png',
+    icon: path.join(__dirname, 'Assets', 'dungeondesignericon.png'),
     title: 'Dungeon Designer',
     autoHideMenuBar: true,
     resizable: false,
@@ -57,7 +57,7 @@ function createMainWindow() {
     show: false,
     
     autoHideMenuBar: true,
-    icon: './Assets/dungeondesignericon.png',
+    icon: path.join(__dirname, 'Assets', 'dungeondesignericon.png'),
     title: 'Dungeon Designer',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
