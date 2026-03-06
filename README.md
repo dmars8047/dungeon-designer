@@ -13,7 +13,7 @@ A 2D tile-based map editor for creating game levels. Design dungeon maps, platfo
 - **Editing Tools** - Brush, eraser, selection, collision marking, and flood fill
 - **Clipboard System** - Copy and paste tile regions for repeated patterns
 - **Collision Data** - Mark collision zones for game physics
-- **Multiple Export Formats** - JSON and custom game format (.bro)
+- **Multiple Export Formats** - JSON and custom game format (.ddtf)
 - **Project Files** - Save and load projects as .ddes files
 
 ## Prerequisites
@@ -101,7 +101,7 @@ Save your work as a `.ddes` file to preserve the full project state including al
 Export your map data for use in game engines:
 
 - **JSON Format** - Exports tile layers and collision data as JSON files
-- **Custom Format (.bro)** - Comma-separated text format for easy parsing
+- **Custom Format (.ddtf)** - Comma-separated text format for easy parsing
 
 ### Export Data Structure
 
@@ -119,8 +119,8 @@ Export your map data for use in game engines:
 }
 ```
 
-#### .bro Format
-Each layer exports as a separate file with comma-separated tile indices:
+#### .ddtf Format (Dungeon Designer Text Format)
+Each layer exports as a separate file with comma-separated tile data:
 ```
 0,0,1,1,2,2
 0,0,1,1,2,2
