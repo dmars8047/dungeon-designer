@@ -209,6 +209,7 @@ exportButton.onclick = async () => {
 
     if (!exportDirectoryInput.value) {
         DisplayMessage("An export directory must be specified", 1500, MessageType.Warning);
+        return;
     }
 
     if (jsonRadioBtn.checked) {
@@ -311,7 +312,7 @@ mapCanvas.addEventListener("mousedown", (event) => {
                 mapCursorColor = cursorSelectModeColor;
             }
             else if (mapMode === MapModes.Fill) {
-                let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1])[0];
+                let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1]);
                 if (targetTile) {
                     targetTile = { X: targetTile.TilesheetX, Y: targetTile.TilesheetY };
                     // Make sure the user is not targeting the same tile they have selected.
@@ -546,10 +547,9 @@ function copySelectionToClipboard() {
         let cells = [];
 
         for (let i = 0; i < selectedRect.cells.length; i++) {
-            if (project.graphicalTileLayers[currentGraphicalTileLayer].values.some(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y)) {
+            let tile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y);
 
-                let tile = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X === selectedRect.cells[i].x && val.Y === selectedRect.cells[i].y)[0];
-
+            if (tile) {
                 let cell = { TilesheetX: tile.TilesheetX, TilesheetY: tile.TilesheetY, X: tile.X - selectedRect.startX, Y: tile.Y - selectedRect.startY };
 
                 ctx.drawImage(tileSetSourceImage, cell.TilesheetX, cell.TilesheetY, project.tileSize, project.tileSize, cell.X, cell.Y, project.tileSize, project.tileSize);
@@ -743,6 +743,7 @@ window.electronAPI.loadNewProject((_, value) => {
     };
 
     clearHistory(); // Clear undo/redo history for new project
+    clipboardValue = { width: 0, height: 0, values: [] }; // Reset clipboard for new project
     applyMapDimensions();
     applyMapBackgroundColor();
     updateGraphicalTileLayers();
@@ -774,8 +775,8 @@ projectSettingsApplyButton.onclick = async () => {
     let mapBackgroundColorInput = document.getElementById('map-background-color-input');
 
     project.name = projectNameInput.value;
-    project.mapWidth = projectWidthInput.value;
-    project.mapHeight = projectHeightInput.value;
+    project.mapWidth = parseInt(projectWidthInput.value);
+    project.mapHeight = parseInt(projectHeightInput.value);
     project.backgroundColor = mapBackgroundColorInput.value;
     await window.electronAPI.updateProjectName(project.name);
     applyMapDimensions();
@@ -914,6 +915,12 @@ function removeCollisionTile(mouseX, mouseY) {
 
 // Utility for getting coordinates of mouse click
 function getMouseCoordinatesOnMap(event) {
+    // Guard against invalid tileSize
+    if (project.tileSize <= 0) {
+        console.warn("Invalid tileSize:", project.tileSize);
+        return [0, 0];
+    }
+
     const { x, y } = event.target.getBoundingClientRect();
     const mouseX = Math.floor((event.clientX - x) / project.tileSize) * project.tileSize;
     const mouseY = Math.floor((event.clientY - y) / project.tileSize) * project.tileSize;
@@ -952,7 +959,7 @@ function drawCell(x, y) {
     ctx.clearRect(x, y, project.tileSize, project.tileSize);
 
     for (let i = 0; i < project.graphicalTileLayers.length; i++) {
-        let cell = project.graphicalTileLayers[i].values.filter(val => val.X == x && val.Y == y)[0];
+        let cell = project.graphicalTileLayers[i].values.find(val => val.X == x && val.Y == y);
 
         if (cell) {
             ctx.drawImage(
@@ -970,15 +977,15 @@ function drawCell(x, y) {
     }
 
     if (mapMode == MapModes.Collision) {
-        let cell = project.collisionTiles.filter(val => val.X == x && val.Y == y)[0];
+        let cell = project.collisionTiles.find(val => val.X == x && val.Y == y);
 
         if (cell) {
             ctx.drawImage(
                 collisionTileImage,
                 0,
                 0,
-                collisionTileSize,
-                collisionTileSize,
+                64,
+                64,
                 cell.X,
                 cell.Y,
                 project.tileSize,
@@ -1123,12 +1130,22 @@ function drawPastePreview(x, y) {
     // Restore context state
     ctx.restore();
 
-    // Draw dashed rectangle outline around paste area
+    // Draw dashed rectangle outline around paste area (clipped to map bounds)
     ctx.save();
     ctx.strokeStyle = cursorPasteModeColor;
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
-    ctx.strokeRect(x, y, clipboardValue.width, clipboardValue.height);
+
+    // Clip rectangle coordinates to map bounds
+    const outlineX = Math.max(0, x);
+    const outlineY = Math.max(0, y);
+    const outlineWidth = Math.min(project.mapWidth - x, clipboardValue.width);
+    const outlineHeight = Math.min(project.mapHeight - y, clipboardValue.height);
+
+    if (outlineWidth > 0 && outlineHeight > 0) {
+        ctx.strokeRect(outlineX, outlineY, outlineWidth, outlineHeight);
+    }
+
     ctx.restore();
 }
 
@@ -1361,6 +1378,12 @@ function initTileSelector() {
 
     // Click handler - calculate tile from coordinates
     tilesetSelectorCanvas.onclick = (e) => {
+        // Guard against invalid tileSize
+        if (project.tileSize <= 0) {
+            console.warn("Invalid tileSize:", project.tileSize);
+            return;
+        }
+
         const rect = tilesetSelectorCanvas.getBoundingClientRect();
         const scaleX = tilesetSelectorCanvas.width / rect.width;
         const scaleY = tilesetSelectorCanvas.height / rect.height;
@@ -1372,6 +1395,12 @@ function initTileSelector() {
 
     // Hover handler for visual feedback
     tilesetSelectorCanvas.onmousemove = (e) => {
+        // Guard against invalid tileSize
+        if (project.tileSize <= 0) {
+            console.warn("Invalid tileSize:", project.tileSize);
+            return;
+        }
+
         const rect = tilesetSelectorCanvas.getBoundingClientRect();
         const scaleX = tilesetSelectorCanvas.width / rect.width;
         const scaleY = tilesetSelectorCanvas.height / rect.height;

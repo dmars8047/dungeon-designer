@@ -67,7 +67,9 @@ export function PresentContext(mouseX, mouseY, selectionOverMax) {
 
 export function RemoveContext() {
     let contextMenu = document.getElementById(contextMenuId);
-    contextMenu.remove();
+    if (contextMenu) {
+        contextMenu.remove();
+    }
 }
 
 function SelectionMade(selection) {

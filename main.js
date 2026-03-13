@@ -199,7 +199,8 @@ async function handleExportProject(payload) {
       };
 
       const filename = `${payload.projectData.name}-map-data.json`;
-      await fs.writeFile(payload.exportDirectory + "/" + filename, JSON.stringify(exportData, null, 2));
+      const filepath = path.join(payload.exportDirectory, filename);
+      await fs.writeFile(filepath, JSON.stringify(exportData, null, 2));
 
     } catch (err) {
       console.error(err);
@@ -209,53 +210,49 @@ async function handleExportProject(payload) {
   }
   else if (payload.format === "Custom Game Format") {
     try {
-      if (payload.projectData.graphicalTileLayers[0].values.length > 0) {
-        let backgroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: BACKGROUND_TILES\n`;
-        backgroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+      let backgroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: BACKGROUND_TILES\n`;
+      backgroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
 
-        for (let i = 0; i < payload.projectData.graphicalTileLayers[0].values.length; i++) {
-          let tile = payload.projectData.graphicalTileLayers[0].values[i];
-          backgroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
-        }
-
-        await fs.writeFile(payload.exportDirectory + "/background-tiles.ddtf", backgroundTileContent);
+      for (let i = 0; i < payload.projectData.graphicalTileLayers[0].values.length; i++) {
+        let tile = payload.projectData.graphicalTileLayers[0].values[i];
+        backgroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
       }
 
-      if (payload.projectData.graphicalTileLayers[1].values.length > 0) {
-        let middleTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: MIDDLE_TILES\n`;
-        middleTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+      const backgroundFilepath = path.join(payload.exportDirectory, "background-tiles.ddtf");
+      await fs.writeFile(backgroundFilepath, backgroundTileContent);
 
-        for (let i = 0; i < payload.projectData.graphicalTileLayers[1].values.length; i++) {
-          let tile = payload.projectData.graphicalTileLayers[1].values[i];
-          middleTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
-        }
+      let middleTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: MIDDLE_TILES\n`;
+      middleTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
 
-        await fs.writeFile(payload.exportDirectory + "/middle-tiles.ddtf", middleTileContent);
+      for (let i = 0; i < payload.projectData.graphicalTileLayers[1].values.length; i++) {
+        let tile = payload.projectData.graphicalTileLayers[1].values[i];
+        middleTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
       }
 
-      if (payload.projectData.graphicalTileLayers[2].values.length > 0) {
-        let foregroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: FOREGROUND_TILES\n`;
-        foregroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+      const middleFilepath = path.join(payload.exportDirectory, "middle-tiles.ddtf");
+      await fs.writeFile(middleFilepath, middleTileContent);
 
-        for (let i = 0; i < payload.projectData.graphicalTileLayers[2].values.length; i++) {
-          let tile = payload.projectData.graphicalTileLayers[2].values[i];
-          foregroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
-        }
+      let foregroundTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: FOREGROUND_TILES\n`;
+      foregroundTileContent += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
 
-        await fs.writeFile(payload.exportDirectory + "/foreground-tiles.ddtf", foregroundTileContent);
+      for (let i = 0; i < payload.projectData.graphicalTileLayers[2].values.length; i++) {
+        let tile = payload.projectData.graphicalTileLayers[2].values[i];
+        foregroundTileContent += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
       }
 
-      if (payload.projectData.collisionTiles.length > 0) {
-        let collisionTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: COLLISION_TILES\n`;
-        collisionTileContent += "# FORMAT: X, Y\n";
+      const foregroundFilepath = path.join(payload.exportDirectory, "foreground-tiles.ddtf");
+      await fs.writeFile(foregroundFilepath, foregroundTileContent);
 
-        for (let i = 0; i < payload.projectData.collisionTiles.length; i++) {
-          let tile = payload.projectData.collisionTiles[i];
-          collisionTileContent += `${tile.X}, ${tile.Y}\n`;
-        }
+      let collisionTileContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${payload.projectData.name}, CUSTOM_GAME_FORMAT: COLLISION_TILES\n`;
+      collisionTileContent += "# FORMAT: X, Y\n";
 
-        await fs.writeFile(payload.exportDirectory + "/collision-tiles.ddtf", collisionTileContent);
+      for (let i = 0; i < payload.projectData.collisionTiles.length; i++) {
+        let tile = payload.projectData.collisionTiles[i];
+        collisionTileContent += `${tile.X}, ${tile.Y}\n`;
       }
+
+      const collisionFilepath = path.join(payload.exportDirectory, "collision-tiles.ddtf");
+      await fs.writeFile(collisionFilepath, collisionTileContent);
 
       mainWindow.webContents.send('export-complete', payload.exportDirectory);
 

@@ -52,8 +52,8 @@ createNewProjectButton.addEventListener('click', async () => {
             tileSize: parseInt(tileSizeSelect.value),
             layerNames: [layerNameInput.value, layer2NameInput.value, layer3NameInput.value],
             tilesetImagePath: tilesetFileInput.value,
-            mapWidth: mapDimensionsWidthInput.value,
-            mapHeight: mapDimensionsHeightInput.value
+            mapWidth: parseInt(mapDimensionsWidthInput.value),
+            mapHeight: parseInt(mapDimensionsHeightInput.value)
         };
 
         await window.electronAPI.createNewProject(creationRequest);
@@ -94,17 +94,26 @@ function projectCreateFormIsValid() {
         projectNameInput.style.backgroundColor = '#fff';
     }
 
+    const width = parseInt(mapDimensionsWidthInput.value);
+    const height = parseInt(mapDimensionsHeightInput.value);
+
     if (!mapDimensionsWidthInput.value ||
-        mapDimensionsWidthInput.value < 1 ||
+        isNaN(width) ||
+        width < 1 ||
+        width > 10000 ||
         !mapDimensionsHeightInput.value ||
-        mapDimensionsHeightInput.value < 1) {
+        isNaN(height) ||
+        height < 1 ||
+        height > 10000) {
 
         mapDimensionsHeightInput.style.backgroundColor = '#ffc8c4';
         mapDimensionsWidthInput.style.backgroundColor = '#ffc8c4';
 
         if (!errorMessageText) {
-            errorMessageText = 'You must provide a width and height for first map. The values must be positive numbers.';
+            errorMessageText = 'Map dimensions must be between 1x1 and 10000x10000.';
         }
+        
+        isValid = false;
     }
     else {
         mapDimensionsHeightInput.style.backgroundColor = '#fff';
