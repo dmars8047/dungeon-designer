@@ -58,7 +58,8 @@ let selectedTile = [0, 0]; //Which tile we will paint from the menu
 // Tileset selector (single canvas approach to avoid GPU memory exhaustion)
 let tilesetSelectorCanvas;  // Single canvas for tileset display
 let tilesetSelectorCtx;     // Its 2D context
-let hoveredTile = null;     // Track hovered tile for visual feedback
+let tilesetHoverOverlay;    // CSS overlay div for hover cursor
+let tilesetSelectionOverlay; // CSS overlay div for selection cursor
 
 const MapModes = {
     Brush: 0,
@@ -73,6 +74,7 @@ const MapModes = {
 let mapMode = MapModes.Brush;
 
 let mapCursorPosition = [-1, -1];
+let mapCursorOverlay;  // CSS overlay div for map cursor
 let lastSetTilePosition = [-1, -1];
 let selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
 let clipboardValue = { width: 0, height: 0, values: [] };
@@ -571,18 +573,7 @@ function copySelectionToClipboard() {
 }
 
 function clearSelectModeCursor() {
-    if (selectedRect && selectedRect.cells && selectedRect.cells.length > 0) {
-        const cleanupHeight = selectedRect.startY + selectedRect.height + project.tileSize;
-        const cleanupWidth = selectedRect.startX + selectedRect.width + project.tileSize;
-        const cleanupY = selectedRect.startY - project.tileSize;
-        const cleanupX = selectedRect.startX - project.tileSize;
-
-        for (let y = cleanupY; y <= cleanupHeight; y += project.tileSize) {
-            for (let x = cleanupX; x <= cleanupWidth; x += project.tileSize) {
-                drawCell(x, y);
-            }
-        }
-    }
+    mapCursorOverlay.style.display = "none";
 }
 
 eraserToolButton.onclick = () => {
@@ -601,6 +592,7 @@ clearLayerButton.onclick = () => {
 // Tileset source image loaded event
 tileSetSourceImage.onload = () => {
     initTileSelector();
+    if (!mapCursorOverlay) initMapCursorOverlay();
     // This timeout is for a load timing issue.
     setTimeout(() => {
         drawMap();
@@ -791,39 +783,40 @@ projectSettingsApplyButton.onclick = async () => {
 // Logic Functions
 //
 
+// Initialize the map cursor overlay div
+function initMapCursorOverlay() {
+    mapCursorOverlay = document.createElement("div");
+    mapCursorOverlay.style.position = "absolute";
+    mapCursorOverlay.style.border = "2px dashed " + mapCursorColor;
+    mapCursorOverlay.style.pointerEvents = "none";
+    mapCursorOverlay.style.display = "none";
+    mapCursorOverlay.style.boxSizing = "border-box";
+    mapWrapper.style.position = "relative";
+    mapWrapper.appendChild(mapCursorOverlay);
+}
+
 function clearMapCursor() {
-    drawCell(mapCursorPosition[0], mapCursorPosition[1]);
-    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1]);
-    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1]);
-    drawCell(mapCursorPosition[0], mapCursorPosition[1] + project.tileSize);
-    drawCell(mapCursorPosition[0], mapCursorPosition[1] - project.tileSize);
-    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1] - project.tileSize);
-    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1] - project.tileSize);
-    drawCell(mapCursorPosition[0] - project.tileSize, mapCursorPosition[1] + project.tileSize);
-    drawCell(mapCursorPosition[0] + project.tileSize, mapCursorPosition[1] + project.tileSize);
+    mapCursorOverlay.style.display = "none";
 }
 
 function drawSelectModeCursor(x, y, w, h) {
-    let ctx = mapCanvas.getContext("2d");
-    ctx.save();
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = mapCursorColor;
-    ctx.strokeRect(x, y, w, h);
-    ctx.restore();
+    mapCursorOverlay.style.left = (x + mapCanvas.offsetLeft) + "px";
+    mapCursorOverlay.style.top = (y + mapCanvas.offsetTop) + "px";
+    mapCursorOverlay.style.width = w + "px";
+    mapCursorOverlay.style.height = h + "px";
+    mapCursorOverlay.style.borderColor = mapCursorColor;
+    mapCursorOverlay.style.display = "block";
 }
 
 function drawMapCursor(x, y) {
-    clearMapCursor();
     mapCursorPosition[0] = x;
     mapCursorPosition[1] = y;
-    let ctx = mapCanvas.getContext("2d");
-    ctx.save();
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = mapCursorColor;
-    ctx.strokeRect(x, y, project.tileSize, project.tileSize);
-    ctx.restore();
+    mapCursorOverlay.style.left = (x + mapCanvas.offsetLeft) + "px";
+    mapCursorOverlay.style.top = (y + mapCanvas.offsetTop) + "px";
+    mapCursorOverlay.style.width = project.tileSize + "px";
+    mapCursorOverlay.style.height = project.tileSize + "px";
+    mapCursorOverlay.style.borderColor = mapCursorColor;
+    mapCursorOverlay.style.display = "block";
 }
 
 // Updates the set layer dropdown
@@ -855,7 +848,18 @@ function applyMapBackgroundColor() {
 // Sets the selected tileset
 function selectTile(x, y) {
     selectedTile = [x, y];
-    drawTilesetSelector();
+    if (tilesetSelectionOverlay && tilesetSelectorCanvas) {
+        const rect = tilesetSelectorCanvas.getBoundingClientRect();
+        const displayW = rect.width * project.tileSize / tilesetSelectorCanvas.width;
+        const displayH = rect.height * project.tileSize / tilesetSelectorCanvas.height;
+        const tileX = x / project.tileSize;
+        const tileY = y / project.tileSize;
+        tilesetSelectionOverlay.style.left = (tileX * displayW) + "px";
+        tilesetSelectionOverlay.style.top = (tileY * displayH) + "px";
+        tilesetSelectionOverlay.style.width = displayW + "px";
+        tilesetSelectionOverlay.style.height = displayH + "px";
+        tilesetSelectionOverlay.style.display = "block";
+    }
 }
 
 // Handler for placing new tiles on the map
@@ -1373,78 +1377,78 @@ function initTileSelector() {
     tilesetSelectorCanvas.height = tileSetSourceImage.height;
     tilesetSelectorCtx = tilesetSelectorCanvas.getContext("2d");
 
-    // Draw tileset and initial selection
+    // Create a wrapper div for positioning overlays relative to the canvas
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "relative";
+    wrapper.style.display = "inline-block";
+    wrapper.style.width = "100%";
+
+    // Create hover overlay div
+    tilesetHoverOverlay = document.createElement("div");
+    tilesetHoverOverlay.style.position = "absolute";
+    tilesetHoverOverlay.style.border = "2px solid rgba(255, 255, 255, 0.5)";
+    tilesetHoverOverlay.style.pointerEvents = "none";
+    tilesetHoverOverlay.style.display = "none";
+    tilesetHoverOverlay.style.boxSizing = "border-box";
+
+    // Create selection overlay div
+    tilesetSelectionOverlay = document.createElement("div");
+    tilesetSelectionOverlay.style.position = "absolute";
+    tilesetSelectionOverlay.style.border = "3px solid #fad644";
+    tilesetSelectionOverlay.style.pointerEvents = "none";
+    tilesetSelectionOverlay.style.display = "none";
+    tilesetSelectionOverlay.style.boxSizing = "border-box";
+
+    // Draw tileset (once, no hover/selection borders on canvas)
     drawTilesetSelector();
+
+    // Helper to get displayed tile size
+    function getDisplayedTileSize() {
+        const rect = tilesetSelectorCanvas.getBoundingClientRect();
+        return {
+            w: rect.width * project.tileSize / tilesetSelectorCanvas.width,
+            h: rect.height * project.tileSize / tilesetSelectorCanvas.height,
+            scaleX: tilesetSelectorCanvas.width / rect.width,
+            scaleY: tilesetSelectorCanvas.height / rect.height,
+            rect: rect
+        };
+    }
 
     // Click handler - calculate tile from coordinates
     tilesetSelectorCanvas.onclick = (e) => {
-        // Guard against invalid tileSize
-        if (project.tileSize <= 0) {
-            console.warn("Invalid tileSize:", project.tileSize);
-            return;
-        }
-
-        const rect = tilesetSelectorCanvas.getBoundingClientRect();
-        const scaleX = tilesetSelectorCanvas.width / rect.width;
-        const scaleY = tilesetSelectorCanvas.height / rect.height;
+        if (project.tileSize <= 0) return;
+        const { scaleX, scaleY, rect } = getDisplayedTileSize();
         const x = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize) * project.tileSize;
         const y = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize) * project.tileSize;
         selectTile(x, y);
         changeMapMode(MapModes.Brush);
     };
 
-    // Hover handler for visual feedback
+    // Hover handler - just repositions a CSS div, no canvas redraw
     tilesetSelectorCanvas.onmousemove = (e) => {
-        // Guard against invalid tileSize
-        if (project.tileSize <= 0) {
-            console.warn("Invalid tileSize:", project.tileSize);
-            return;
-        }
-
-        const rect = tilesetSelectorCanvas.getBoundingClientRect();
-        const scaleX = tilesetSelectorCanvas.width / rect.width;
-        const scaleY = tilesetSelectorCanvas.height / rect.height;
-        const x = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize) * project.tileSize;
-        const y = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize) * project.tileSize;
-        if (hoveredTile === null || hoveredTile[0] !== x || hoveredTile[1] !== y) {
-            hoveredTile = [x, y];
-            drawTilesetSelector();
-        }
+        if (project.tileSize <= 0) return;
+        const { w, h, scaleX, scaleY, rect } = getDisplayedTileSize();
+        const tileX = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize);
+        const tileY = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize);
+        tilesetHoverOverlay.style.left = (tileX * w) + "px";
+        tilesetHoverOverlay.style.top = (tileY * h) + "px";
+        tilesetHoverOverlay.style.width = w + "px";
+        tilesetHoverOverlay.style.height = h + "px";
+        tilesetHoverOverlay.style.display = "block";
     };
 
     tilesetSelectorCanvas.onmouseleave = () => {
-        hoveredTile = null;
-        drawTilesetSelector();
+        tilesetHoverOverlay.style.display = "none";
     };
 
-    tilesetContainer.appendChild(tilesetSelectorCanvas);
+    wrapper.appendChild(tilesetSelectorCanvas);
+    wrapper.appendChild(tilesetHoverOverlay);
+    wrapper.appendChild(tilesetSelectionOverlay);
+    tilesetContainer.appendChild(wrapper);
 }
 
-// Renders the tileset image with selection and hover highlights
+// Renders the tileset image on the canvas (drawn once, overlays handle hover/selection)
 function drawTilesetSelector() {
-    // Clear canvas to remove previous highlights
     tilesetSelectorCtx.clearRect(0, 0, tilesetSelectorCanvas.width, tilesetSelectorCanvas.height);
-
-    // Draw base tileset image
     tilesetSelectorCtx.drawImage(tileSetSourceImage, 0, 0);
-
-    // Draw hover highlight (subtle)
-    if (hoveredTile !== null) {
-        tilesetSelectorCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        tilesetSelectorCtx.lineWidth = 2;
-        tilesetSelectorCtx.strokeRect(
-            hoveredTile[0] + 1, hoveredTile[1] + 1,
-            project.tileSize - 2, project.tileSize - 2
-        );
-    }
-
-    // Draw selection highlight (yellow border matching .selected-tile)
-    if (selectedTile[0] >= 0 && selectedTile[1] >= 0) {
-        tilesetSelectorCtx.strokeStyle = '#fad644';
-        tilesetSelectorCtx.lineWidth = 3;
-        tilesetSelectorCtx.strokeRect(
-            selectedTile[0], selectedTile[1],
-            project.tileSize, project.tileSize
-        );
-    }
 }
