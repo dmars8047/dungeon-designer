@@ -54,6 +54,9 @@ let isLeftMouseDown = false;
 let isMiddleMouseDown = false;
 let grabPosition = {}; // helps with dragging
 let selectedTile = [0, 0]; //Which tile we will paint from the menu
+let selectedTileSize = [1, 1]; // Width and height of selection in tile units
+let stashedTile = null; // Stashed selection for restoring after eraser/collision/select
+let stashedTileSize = null;
 
 // Tileset selector (single canvas approach to avoid GPU memory exhaustion)
 let tilesetSelectorCanvas;  // Single canvas for tileset display
@@ -621,6 +624,24 @@ function changeMapMode(desiredMode, toggleBehavior = false) {
         drawMap();
     }
 
+    // Stash multi-tile selection when leaving drawing modes, restore when returning
+    const drawingModes = [MapModes.Brush, MapModes.Fill];
+    const enteringDrawingMode = drawingModes.includes(desiredMode);
+    const leavingDrawingMode = drawingModes.includes(mapMode);
+
+    if (!enteringDrawingMode && leavingDrawingMode) {
+        stashedTile = [...selectedTile];
+        stashedTileSize = [...selectedTileSize];
+        selectedTileSize = [1, 1];
+    }
+    if (enteringDrawingMode && !leavingDrawingMode && stashedTile) {
+        selectedTile = stashedTile;
+        selectedTileSize = stashedTileSize;
+        stashedTile = null;
+        stashedTileSize = null;
+        selectTile(selectedTile[0], selectedTile[1], selectedTileSize[0], selectedTileSize[1]);
+    }
+
     switch (desiredMode) {
         case MapModes.Fill:
             mapMode = MapModes.Fill;
@@ -813,8 +834,8 @@ function drawMapCursor(x, y) {
     mapCursorPosition[1] = y;
     mapCursorOverlay.style.left = (x + mapCanvas.offsetLeft) + "px";
     mapCursorOverlay.style.top = (y + mapCanvas.offsetTop) + "px";
-    mapCursorOverlay.style.width = project.tileSize + "px";
-    mapCursorOverlay.style.height = project.tileSize + "px";
+    mapCursorOverlay.style.width = (project.tileSize * selectedTileSize[0]) + "px";
+    mapCursorOverlay.style.height = (project.tileSize * selectedTileSize[1]) + "px";
     mapCursorOverlay.style.borderColor = mapCursorColor;
     mapCursorOverlay.style.display = "block";
 }
@@ -845,9 +866,10 @@ function applyMapBackgroundColor() {
     mapCanvas.style.background = project.backgroundColor;
 }
 
-// Sets the selected tileset
-function selectTile(x, y) {
+// Sets the selected tileset tile(s)
+function selectTile(x, y, widthTiles = 1, heightTiles = 1) {
     selectedTile = [x, y];
+    selectedTileSize = [widthTiles, heightTiles];
     if (tilesetSelectionOverlay && tilesetSelectorCanvas) {
         const rect = tilesetSelectorCanvas.getBoundingClientRect();
         const displayW = rect.width * project.tileSize / tilesetSelectorCanvas.width;
@@ -856,37 +878,64 @@ function selectTile(x, y) {
         const tileY = y / project.tileSize;
         tilesetSelectionOverlay.style.left = (tileX * displayW) + "px";
         tilesetSelectionOverlay.style.top = (tileY * displayH) + "px";
-        tilesetSelectionOverlay.style.width = displayW + "px";
-        tilesetSelectionOverlay.style.height = displayH + "px";
+        tilesetSelectionOverlay.style.width = (displayW * widthTiles) + "px";
+        tilesetSelectionOverlay.style.height = (displayH * heightTiles) + "px";
         tilesetSelectionOverlay.style.display = "block";
     }
+}
+
+// Selects a rectangular region between two tile coordinates (normalizes drag direction)
+function selectTileRegion(startX, startY, endX, endY) {
+    const minX = Math.min(startX, endX);
+    const minY = Math.min(startY, endY);
+    const maxX = Math.max(startX, endX);
+    const maxY = Math.max(startY, endY);
+    const widthTiles = (maxX - minX) / project.tileSize + 1;
+    const heightTiles = (maxY - minY) / project.tileSize + 1;
+    selectTile(minX, minY, widthTiles, heightTiles);
 }
 
 // Handler for placing new tiles on the map
 function setTile(mouseX, mouseY) {
     if (mapMode === MapModes.Brush || mapMode === MapModes.Eraser) {
-        // Find and capture existing tile before removal
-        const existingTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(
-            val => val.X === mouseX && val.Y === mouseY
-        );
-
         // Start batch if not already batching
         const actionType = mapMode === MapModes.Brush ? ActionTypes.TILE_PAINT : ActionTypes.TILE_ERASE;
         if (!isBatchingActive()) {
             startBatch(actionType, currentGraphicalTileLayer);
         }
 
-        // Remove existing tile
-        project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== mouseX || val.Y !== mouseY);
+        for (let dy = 0; dy < selectedTileSize[1]; dy++) {
+            for (let dx = 0; dx < selectedTileSize[0]; dx++) {
+                const mapX = mouseX + dx * project.tileSize;
+                const mapY = mouseY + dy * project.tileSize;
 
-        let newTile = null;
-        if (mapMode === MapModes.Brush) {
-            newTile = { X: mouseX, Y: mouseY, TilesheetX: selectedTile[0], TilesheetY: selectedTile[1] };
-            project.graphicalTileLayers[currentGraphicalTileLayer].values.push(newTile);
+                // Skip tiles outside map bounds
+                if (mapX < 0 || mapY < 0 || mapX >= project.mapWidth || mapY >= project.mapHeight) continue;
+
+                // Find and capture existing tile before removal
+                const existingTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(
+                    val => val.X === mapX && val.Y === mapY
+                );
+
+                // Remove existing tile
+                project.graphicalTileLayers[currentGraphicalTileLayer].values = project.graphicalTileLayers[currentGraphicalTileLayer].values.filter(val => val.X !== mapX || val.Y !== mapY);
+
+                let newTile = null;
+                if (mapMode === MapModes.Brush) {
+                    newTile = {
+                        X: mapX,
+                        Y: mapY,
+                        TilesheetX: selectedTile[0] + dx * project.tileSize,
+                        TilesheetY: selectedTile[1] + dy * project.tileSize
+                    };
+                    project.graphicalTileLayers[currentGraphicalTileLayer].values.push(newTile);
+                }
+
+                // Track the change for undo
+                addToBatch(existingTile || null, newTile);
+                drawCell(mapX, mapY);
+            }
         }
-
-        // Track the change for undo
-        addToBatch(existingTile || null, newTile);
     }
     else if (mapMode === MapModes.Collision) {
         // Find existing collision tile
@@ -909,7 +958,10 @@ function setTile(mouseX, mouseY) {
 
     lastSetTilePosition = [mouseX, mouseY];
 
-    drawCell(mouseX, mouseY);
+    // Collision mode still needs single-cell redraw (brush/eraser draw inside their loop)
+    if (mapMode === MapModes.Collision) {
+        drawCell(mouseX, mouseY);
+    }
     drawMapCursor(mouseX, mouseY);
 }
 
@@ -1414,28 +1466,52 @@ function initTileSelector() {
         };
     }
 
-    // Click handler - calculate tile from coordinates
-    tilesetSelectorCanvas.onclick = (e) => {
-        if (project.tileSize <= 0) return;
+    // Drag-to-select: track drag start tile
+    let tilesetDragStart = null;
+
+    function getTileCoordFromEvent(e) {
         const { scaleX, scaleY, rect } = getDisplayedTileSize();
         const x = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize) * project.tileSize;
         const y = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize) * project.tileSize;
-        selectTile(x, y);
-        changeMapMode(MapModes.Brush);
-    };
+        return { x, y };
+    }
 
-    // Hover handler - just repositions a CSS div, no canvas redraw
+    // Mousedown: start drag, select single tile immediately
+    tilesetSelectorCanvas.addEventListener("mousedown", (e) => {
+        if (e.button !== 0 || project.tileSize <= 0) return;
+        const tile = getTileCoordFromEvent(e);
+        tilesetDragStart = tile;
+        stashedTile = null;
+        stashedTileSize = null;
+        selectTile(tile.x, tile.y);
+        changeMapMode(MapModes.Brush);
+    });
+
+    // Mousemove: update selection region while dragging, and show hover overlay
     tilesetSelectorCanvas.onmousemove = (e) => {
         if (project.tileSize <= 0) return;
-        const { w, h, scaleX, scaleY, rect } = getDisplayedTileSize();
-        const tileX = Math.floor((e.clientX - rect.left) * scaleX / project.tileSize);
-        const tileY = Math.floor((e.clientY - rect.top) * scaleY / project.tileSize);
+
+        // Hover overlay
+        const { w, h } = getDisplayedTileSize();
+        const tile = getTileCoordFromEvent(e);
+        const tileX = tile.x / project.tileSize;
+        const tileY = tile.y / project.tileSize;
         tilesetHoverOverlay.style.left = (tileX * w) + "px";
         tilesetHoverOverlay.style.top = (tileY * h) + "px";
         tilesetHoverOverlay.style.width = w + "px";
         tilesetHoverOverlay.style.height = h + "px";
         tilesetHoverOverlay.style.display = "block";
+
+        // Drag selection
+        if (tilesetDragStart) {
+            selectTileRegion(tilesetDragStart.x, tilesetDragStart.y, tile.x, tile.y);
+        }
     };
+
+    // Mouseup: end drag (on window to catch releases outside the canvas)
+    window.addEventListener("mouseup", () => {
+        tilesetDragStart = null;
+    });
 
     tilesetSelectorCanvas.onmouseleave = () => {
         tilesetHoverOverlay.style.display = "none";
