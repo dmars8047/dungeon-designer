@@ -320,8 +320,9 @@ mapCanvas.addEventListener("mousedown", (event) => {
                 let targetTile = project.graphicalTileLayers[currentGraphicalTileLayer].values.find(val => val.X === mouseCoords[0] && val.Y === mouseCoords[1]);
                 if (targetTile) {
                     targetTile = { X: targetTile.TilesheetX, Y: targetTile.TilesheetY };
-                    // Make sure the user is not targeting the same tile they have selected.
-                    if (targetTile.X === selectedTile[0] && targetTile.Y === selectedTile[1]) {
+                    // Make sure the user is not targeting the same tile they have selected (single-tile only).
+                    if (selectedTileSize[0] === 1 && selectedTileSize[1] === 1 &&
+                        targetTile.X === selectedTile[0] && targetTile.Y === selectedTile[1]) {
                         return;
                     }
                 }
@@ -329,7 +330,7 @@ mapCanvas.addEventListener("mousedown", (event) => {
                 // Capture layer state before fill for undo
                 const beforeFill = project.graphicalTileLayers[currentGraphicalTileLayer].values.map(tile => ({ ...tile }));
 
-                FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile[0], selectedTile[1], mapCanvas.width, mapCanvas.height, targetTile);
+                FillFlood(mouseCoords[0], mouseCoords[1], project.graphicalTileLayers[currentGraphicalTileLayer].values, project.tileSize, selectedTile, selectedTileSize, mapCanvas.width, mapCanvas.height, targetTile);
 
                 // Capture layer state after fill
                 const afterFill = project.graphicalTileLayers[currentGraphicalTileLayer].values.map(tile => ({ ...tile }));
