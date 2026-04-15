@@ -24,7 +24,7 @@
             <div class="tile-header-spacer">
             </div>
             <div class="tile-header-title">
-              <label>Tiles</label>
+              <label class="form-label">Tiles</label>
             </div>
             <div class="tile-tool-container">
             </div>
@@ -35,7 +35,7 @@
             <div class="tile-header-spacer">
             </div>
             <div class="tile-header-title">
-              <label>Clipboard Tile</label>
+              <label class="form-label">Clipboard Tile</label>
             </div>
             <div class="tile-tool-container">
             </div>
@@ -55,7 +55,7 @@
                 title="Clear Layer Tiles">Clear</button>
             </div>
             <div class="map-header-title">
-              <label>Map</label>
+              <label class="form-label">Map</label>
             </div>
             <div class="map-tool-container">
               <button id="brush-tool-btn" class="secondary-button tool-element" title="Brush Tool (B)">
@@ -100,26 +100,28 @@
         <h2>Project&nbsp;Settings</h2>
       </div>
       <div class="grid-container project-settings-form-container">
-        <div style="grid-column: 1; grid-row: 1;">
-          <label for="projectName" class="project-settings-label ">Name:</label>
+        <div>
+          <label for="projectName" class="project-settings-label form-label">Name:</label>
         </div>
-        <div style="grid-column: 2; grid-row: 1">
-          <input type="text" id="project-name-input" name="projectName" placeholder="Project name...">
+        <div>
+          <input type="text" id="project-name-input" class="form-input" name="projectName"
+            placeholder="Project name...">
         </div>
-        <div style="grid-column: 1; grid-row: 2;">
-          <label class="project-settings-label">Map&nbsp;Dimensions:</label>
+        <div>
+          <label class="project-settings-label form-label">Map&nbsp;Dimensions:</label>
         </div>
-        <div style="grid-column: 2; grid-row: 2;">
-          <input type="number" placeholder="Width" id="map-dimensions-width-input" style="width:calc(50% - 5px);">
-          <input type="number" placeholder="Height" id="map-dimensions-height-input" style="width:calc(50% - 5px);">
+        <div>
+          <input type="number" placeholder="Width" id="map-dimensions-width-input" class="form-input half-width-input">
+          <input type="number" placeholder="Height" id="map-dimensions-height-input"
+            class="form-input half-width-input">
         </div>
-        <div style="grid-column: 1; grid-row: 3;">
-          <label class="project-settings-label">Map&nbsp;Background&nbsp;Color:</label>
+        <div>
+          <label class="project-settings-label form-label">Map&nbsp;Background&nbsp;Color:</label>
         </div>
-        <div style="grid-column: 2; grid-row: 3;">
-          <input type="text" id="map-background-color-input" placeholder="#f4f8f9">
+        <div>
+          <input type="text" id="map-background-color-input" class="form-input" placeholder="#f4f8f9">
         </div>
-        <div style="grid-column: 1 / span 2; grid-row: 4;">
+        <div>
           <button class="primary-button" id="project-settings-apply-button" type="button">Apply</button>
         </div>
       </div>
@@ -131,27 +133,28 @@
         <h2>Export Map Data</h2>
       </div>
       <div class="grid-container export-form-container">
-        <div style="grid-column: 1; grid-row: 1;">
-          <label style="float:right">File Type:</label>
+        <div>
+          <label class="export-form-label form-label">File Type:</label>
         </div>
-        <div style="grid-column: 2 / span 2; grid-row: 1;border:solid 1px; text-align: center;">
-          <input style="width:auto; vertical-align: middle;" type="radio" id="json-radio-btn" name="export_type"
-            value="JSON" checked>
-          <label style="display: inline; vertical-align: middle;" for="json-radio-btn">JSON</label>
-          <input style="width:auto; vertical-align: middle" type="radio" id="custom-game-format-radio-btn" name="export_type"
+        <div class="radio-container">
+          <input class="radio-input" type="radio" id="json-radio-btn" name="export_type" value="JSON" checked>
+          <label class="radio-label" for="json-radio-btn">JSON</label>
+          <input class="radio-input" type="radio" id="custom-game-format-radio-btn" name="export_type"
             value="GameData">
-          <label style="display: inline; vertical-align: middle" for="custom-game-format-radio-btn">Custom&nbsp;Game&nbsp;Format</label>
+          <label class="radio-label" for="custom-game-format-radio-btn">Custom&nbsp;Game&nbsp;Format</label>
         </div>
-        <div style="grid-column: 1; grid-row: 2;">
-          <label style="float:right">Export&nbsp;Directory:</label>
+        <div>
+          <label class="export-form-label form-label">Export&nbsp;Directory:</label>
         </div>
-        <div style="grid-column: 2 / span 2; grid-row: 2;">
-          <input id="export-directory-file-input" type="text" placeholder="Export Directory..." readonly>
+        <div>
+          <input id="export-directory-file-input" class="form-input" type="text" placeholder="Export Directory..."
+            readonly>
         </div>
-        <div style="grid-column: 2; grid-row: 3;">
-          <button class="secondary-button" id="select-export-directory-button" type="button">Select Output Directory</button>
+        <div>
+          <button class="secondary-button" id="select-export-directory-button" type="button">Select Output
+            Directory</button>
         </div>
-        <div style="grid-column: 3; grid-row: 3;">
+        <div>
           <button class="primary-button" id="export-button" type="button">Export</button>
         </div>
       </div>

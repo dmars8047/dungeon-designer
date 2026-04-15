@@ -53,7 +53,8 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: primaryDisplay.size.width,
     height: primaryDisplay.size.height,
-    resizable: false,
+    minWidth: 1024,
+    minHeight: 768,
     show: false,
     
     autoHideMenuBar: true,

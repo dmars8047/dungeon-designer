@@ -45,17 +45,17 @@
       <div id="new-project-menu">
         <div class="grid-container project-creation-panel">
           <div style="grid-column: 1 / span 4; grid-row: 1;">
-            <fieldset>
+            <fieldset class="form-fieldset">
               <legend>Project Settings</legend>
               <div class="grid-container">
                 <div style="grid-column: 1 / span 2; grid-row: 1;">
-                  <label for="projectName">Name:</label>
-                  <input type="text" id="project-name-input" name="projectName" placeholder="Project name..."
-                    value="Test">
+                  <label for="projectName" class="form-label">Name:</label>
+                  <input type="text" id="project-name-input" class="form-input" name="projectName"
+                    placeholder="Project name..." value="Test">
                 </div>
                 <div style="grid-column: 3; grid-row: 1;">
-                  <label for="tilesizes">Default Tile Size:</label>
-                  <select name="tilesizes" id="tile-size-select">
+                  <label for="tilesizes" class="form-label">Default Tile Size:</label>
+                  <select name="tilesizes" id="tile-size-select" class="form-select">
                     <option value="16">16</option>
                     <option value="32" selected>32</option>
                     <option value="48">48</option>
@@ -66,45 +66,47 @@
             </fieldset>
           </div>
           <div id="create-project-form-section" style="grid-column: 1 / span 4; grid-row: 2;">
-            <fieldset class="project-creation-tile-fieldset ">
+            <fieldset class="form-fieldset project-creation-tile-fieldset">
               <legend>Map Area Initialization</legend>
               <div class="grid-container">
                 <div
-                  style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px;margin-bottom: 8px;">
+                  style="grid-column: 1 / span 3; grid-row: 1; border-bottom: 1px solid #ddd; padding-bottom: 16px; margin-bottom: 8px;">
                   <div class="grid-container">
-                    <div style="grid-column: 1; grid-row: 1; margin:auto;">
-                      <label style="margin-top: 8px;">Map Dimensions:</label>
+                    <div style="grid-column: 1; grid-row: 1; margin: auto;">
+                      <label class="form-label" style="margin-top: 8px;">Map Dimensions:</label>
                     </div>
                     <div style="grid-column: 2; grid-row: 1;">
-                      <input type="number" placeholder="Width" id="map-dimensions-width-input" value="1280">
+                      <input type="number" placeholder="Width" id="map-dimensions-width-input" class="form-input"
+                        value="1280">
                     </div>
                     <div style="grid-column: 3; grid-row: 1;">
-                      <input type="number" placeholder="Height" id="map-dimensions-height-input" value="720">
+                      <input type="number" placeholder="Height" id="map-dimensions-height-input" class="form-input"
+                        value="720">
                     </div>
                   </div>
                 </div>
                 <div style="grid-column: 1 / span 3; grid-row: 2;">
                   <div class="grid-container">
                     <div style="grid-column: 1; grid-row: 1; margin: auto;">
-                      <label for="layer-1">Tile Layer 1</label>
+                      <label for="layer-1" class="form-label">Tile Layer 1</label>
                     </div>
                     <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
-                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" name="layer-1"
-                        value="Background" readonly>
+                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" class="form-input"
+                        name="layer-1" value="Background" readonly>
                     </div>
                     <div style="grid-column: 1; grid-row: 2; margin: auto;">
-                      <label for="layer-2">Tile Layer 2</label>
+                      <label for="layer-2" class="form-label">Tile Layer 2</label>
                     </div>
                     <div id="layer-2-input-container" style="grid-column: 2 / span 2; grid-row: 2;">
-                      <input type="text" placeholder="Layer Name..." id="layer-2-name-input" name="layer-2"
-                        value="Middle" readonly>
+                      <input type="text" placeholder="Layer Name..." id="layer-2-name-input" class="form-input"
+                        name="layer-2" value="Middle" readonly>
                     </div>
                     <div style="grid-column: 1; grid-row: 3; margin: auto;">
-                      <label for="layer-3">Tile Layer 3</label>
+                      <label for="layer-3" class="form-label">Tile Layer 3</label>
                     </div>
                     <div id="layer-3-input-container" style="grid-column: 2 / span 2; grid-row: 3;">
-                      <input type="text" placeholder="Layer Name..." id="layer-3-name-input" name="layer-3"
-                        value="Foreground" readonly>
+                      <input type="text" placeholder="Layer Name..." id="layer-3-name-input" class="form-input"
+                        name="layer-3" value="Foreground" readonly>
                     </div>
                     <div style="grid-column: 1; grid-row: 4;">
                       <button id="import-tileset-button" type="button" style="height: 40px;"
@@ -112,7 +114,8 @@
                         Tileset</button>
                     </div>
                     <div style="grid-column: 2 / span 2; grid-row: 4;">
-                      <input id="tileset-file-input" type="text" placeholder="Tileset file path" readonly>
+                      <input id="tileset-file-input" class="form-input" type="text" placeholder="Tileset file path"
+                        readonly>
                     </div>
                   </div>
                 </div>
