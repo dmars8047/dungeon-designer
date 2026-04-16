@@ -5,14 +5,14 @@
   <meta charset="UTF-8">
   <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
   <!-- CSS only -->
   <link href="./styles.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <title>Dungeon Designer</title>
 </head>
 
-<body>
+<body class="landing-page">
   <div id="landing-menu-card" class="card landing-menu-card">
     <header id="landing-header" class="landing-header">
       <img style="margin: auto;" src="./Assets/dungeondesignerlogo.png" />
@@ -62,6 +62,16 @@
                     <option value="64">64</option>
                   </select>
                 </div>
+                <div style="grid-column: 4; grid-row: 1;">
+                  <label for="layer-count" class="form-label">Layers:</label>
+                  <select name="layer-count" id="layer-count-select" class="form-select">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
               </div>
             </fieldset>
           </div>
@@ -76,44 +86,66 @@
                       <label class="form-label" style="margin-top: 8px;">Map Dimensions:</label>
                     </div>
                     <div style="grid-column: 2; grid-row: 1;">
-                      <input type="number" placeholder="Width" id="map-dimensions-width-input" class="form-input"
-                        value="1280">
+                      <input type="number" placeholder="Width" id="map-dimensions-width-input" class="form-input">
                     </div>
                     <div style="grid-column: 3; grid-row: 1;">
-                      <input type="number" placeholder="Height" id="map-dimensions-height-input" class="form-input"
-                        value="720">
+                      <input type="number" placeholder="Height" id="map-dimensions-height-input" class="form-input">
                     </div>
                   </div>
                 </div>
                 <div style="grid-column: 1 / span 3; grid-row: 2;">
                   <div class="grid-container">
-                    <div style="grid-column: 1; grid-row: 1; margin: auto;">
-                      <label for="layer-1" class="form-label">Tile Layer 1</label>
+                    <div class="layer-name-row" style="display: contents;">
+                      <div style="grid-column: 1; margin: auto;">
+                        <label for="layer-1" class="form-label">Layer 1</label>
+                      </div>
+                      <div style="grid-column: 2 / span 2;">
+                        <input type="text" placeholder="Layer Name..." id="layer-1-name-input" class="form-input"
+                          name="layer-1" value="Background">
+                      </div>
                     </div>
-                    <div id="layer-1-input-container" style="grid-column: 2 / span 2; grid-row: 1;">
-                      <input type="text" placeholder="Layer Name..." id="layer-1-name-input" class="form-input"
-                        name="layer-1" value="Background" readonly>
+                    <div class="layer-name-row" style="display: contents;">
+                      <div style="grid-column: 1; margin: auto;">
+                        <label for="layer-2" class="form-label">Layer 2</label>
+                      </div>
+                      <div style="grid-column: 2 / span 2;">
+                        <input type="text" placeholder="Layer Name..." id="layer-2-name-input" class="form-input"
+                          name="layer-2" value="Middle">
+                      </div>
                     </div>
-                    <div style="grid-column: 1; grid-row: 2; margin: auto;">
-                      <label for="layer-2" class="form-label">Tile Layer 2</label>
+                    <div class="layer-name-row" style="display: contents;">
+                      <div style="grid-column: 1; margin: auto;">
+                        <label for="layer-3" class="form-label">Layer 3</label>
+                      </div>
+                      <div style="grid-column: 2 / span 2;">
+                        <input type="text" placeholder="Layer Name..." id="layer-3-name-input" class="form-input"
+                          name="layer-3" value="Foreground">
+                      </div>
                     </div>
-                    <div id="layer-2-input-container" style="grid-column: 2 / span 2; grid-row: 2;">
-                      <input type="text" placeholder="Layer Name..." id="layer-2-name-input" class="form-input"
-                        name="layer-2" value="Middle" readonly>
+                    <div class="layer-name-row" style="display: contents;">
+                      <div style="grid-column: 1; margin: auto;">
+                        <label for="layer-4" class="form-label">Layer 4</label>
+                      </div>
+                      <div style="grid-column: 2 / span 2;">
+                        <input type="text" placeholder="Layer Name..." id="layer-4-name-input" class="form-input"
+                          name="layer-4" value="Overlay">
+                      </div>
                     </div>
-                    <div style="grid-column: 1; grid-row: 3; margin: auto;">
-                      <label for="layer-3" class="form-label">Tile Layer 3</label>
+                    <div class="layer-name-row" style="display: contents;">
+                      <div style="grid-column: 1; margin: auto;">
+                        <label for="layer-5" class="form-label">Layer 5</label>
+                      </div>
+                      <div style="grid-column: 2 / span 2;">
+                        <input type="text" placeholder="Layer Name..." id="layer-5-name-input" class="form-input"
+                          name="layer-5" value="Top">
+                      </div>
                     </div>
-                    <div id="layer-3-input-container" style="grid-column: 2 / span 2; grid-row: 3;">
-                      <input type="text" placeholder="Layer Name..." id="layer-3-name-input" class="form-input"
-                        name="layer-3" value="Foreground" readonly>
-                    </div>
-                    <div style="grid-column: 1; grid-row: 4;">
+                    <div style="grid-column: 1;">
                       <button id="import-tileset-button" type="button" style="height: 40px;"
                         class="secondary-button form-button">Import
                         Tileset</button>
                     </div>
-                    <div style="grid-column: 2 / span 2; grid-row: 4;">
+                    <div style="grid-column: 2 / span 2;">
                       <input id="tileset-file-input" class="form-input" type="text" placeholder="Tileset file path"
                         readonly>
                     </div>
@@ -133,7 +165,9 @@
       </div>
     </div>
   </div>
-  <!-- You can also require other files to run in this process -->
+  <!-- Hidden file inputs -->
+  <input type="file" id="tileset-file-picker" accept="image/png" style="display:none">
+  <input type="file" id="open-project-file-picker" accept=".ddes" style="display:none">
   <script src="./landing.js" type="module"></script>
 </body>
 

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
   <!-- CSS only -->
   <link href="./styles.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,24 @@
 </head>
 
 <body>
+  <nav id="app-menu-bar" class="app-menu-bar">
+    <div class="menu-item" id="menu-file">
+      <button class="menu-trigger">File</button>
+      <ul class="menu-dropdown">
+        <li><a href="./landing.html">New Project</a></li>
+        <li><button id="menu-open">Open Project</button></li>
+        <li><button id="menu-save">Save</button></li>
+        <li><button id="menu-export">Export</button></li>
+      </ul>
+    </div>
+    <div class="menu-item" id="menu-edit">
+      <button class="menu-trigger">Edit</button>
+      <ul class="menu-dropdown">
+        <li><button id="menu-undo">Undo</button></li>
+        <li><button id="menu-redo">Redo</button></li>
+      </ul>
+    </div>
+  </nav>
   <div class="card" id="main-content">
     <header class="main-header">
       <img src="./Assets/dungeondesignerlogo.png" />
@@ -144,23 +162,14 @@
           <label class="radio-label" for="custom-game-format-radio-btn">Custom&nbsp;Game&nbsp;Format</label>
         </div>
         <div>
-          <label class="export-form-label form-label">Export&nbsp;Directory:</label>
-        </div>
-        <div>
-          <input id="export-directory-file-input" class="form-input" type="text" placeholder="Export Directory..."
-            readonly>
-        </div>
-        <div>
-          <button class="secondary-button" id="select-export-directory-button" type="button">Select Output
-            Directory</button>
-        </div>
-        <div>
           <button class="primary-button" id="export-button" type="button">Export</button>
         </div>
       </div>
     </div>
   </div>
-  <!-- You can also require other files to run in this process -->
+  <!-- Hidden file inputs for project open operations -->
+  <input type="file" id="open-project-input" accept=".ddes" style="display:none">
+  <script src="./node_modules/jszip/dist/jszip.min.js"></script>
   <script src="./renderer.js" type="module"></script>
 </body>
 

@@ -34,7 +34,6 @@ let projectSettingsButton = document.getElementById("btn-map-settings");
 let exportButton = document.getElementById("export-button");
 let projectSettingsModal = document.getElementById("project-settings-modal");
 let exportModal = document.getElementById("export-modal");
-let selectExportDirectoryButton = document.getElementById('select-export-directory-button');
 let eraserToolButton = document.getElementById("eraser-tool-btn");
 let selectToolButton = document.getElementById('select-tool-btn');
 let brushToolButton = document.getElementById('brush-tool-btn');
@@ -98,6 +97,10 @@ const cursorEraserModeColor = "#ff8400";
 const cursorFillModeColor = "#6176ff";
 const cursorPasteModeColor = "#00ffaa";
 const defaultMapBackgroundColor = "#f4f8f9";
+
+function projectSlug() {
+    return project.name.toLowerCase().replace(/\s+/g, '-');
+}
 let mapCursorColor = cursorDrawModeColor;
 
 // Platform detection for keyboard shortcuts
@@ -144,7 +147,7 @@ window.onkeydown = (event) => {
                 return;
             }
             // Ctrl+1/2/3 or Cmd+1/2/3 for layer switching
-            if (['1', '2', '3'].includes(event.key)) {
+            if (['1', '2', '3', '4', '5'].includes(event.key)) {
                 event.preventDefault();
                 const layerIndex = parseInt(event.key) - 1;
                 if (layerIndex < project.graphicalTileLayers.length) {
@@ -203,25 +206,18 @@ window.onkeydown = (event) => {
     }
 }
 
-selectExportDirectoryButton.onclick = async () => {
-    await window.electronAPI.setExportDirectory();
-}
-
 exportButton.onclick = async () => {
     const jsonRadioBtn = document.getElementById('json-radio-btn');
     const customGameFormatRadioBtn = document.getElementById('custom-game-format-radio-btn');
-    const exportDirectoryInput = document.getElementById('export-directory-file-input');
 
-    if (!exportDirectoryInput.value) {
-        DisplayMessage("An export directory must be specified", 1500, MessageType.Warning);
-        return;
-    }
-
-    if (jsonRadioBtn.checked) {
-        await window.electronAPI.exportProject({ format: "JSON", exportDirectory: exportDirectoryInput.value, projectData: project });
-    }
-    else if (customGameFormatRadioBtn.checked) {
-        await window.electronAPI.exportProject({ format: "Custom Game Format", exportDirectory: exportDirectoryInput.value, projectData: project });
+    try {
+        if (jsonRadioBtn.checked) {
+            await exportProject("JSON");
+        } else if (customGameFormatRadioBtn.checked) {
+            await exportProject("Custom Game Format");
+        }
+    } catch (err) {
+        DisplayMessage(`Export failed: ${err.message}`, 4000, MessageType.Error);
     }
 }
 
@@ -242,7 +238,55 @@ exportToolButton.onclick = () => {
 }
 
 async function callProjectSave() {
-    await window.electronAPI.callProjectSave();
+    const data = JSON.stringify(project);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${projectSlug()}.ddes`;
+    a.click();
+    URL.revokeObjectURL(url);
+    DisplayMessage('Project saved.', 2000, MessageType.Information);
+}
+
+// Menu bar wiring
+document.getElementById('menu-open').addEventListener('click', () => {
+    document.getElementById('open-project-input').click();
+    closeMenus();
+});
+
+document.getElementById('menu-save').addEventListener('click', async () => {
+    await callProjectSave();
+    closeMenus();
+});
+
+document.getElementById('menu-export').addEventListener('click', () => {
+    toggleExportModal(true);
+    closeMenus();
+});
+
+document.getElementById('menu-undo').addEventListener('click', () => {
+    performUndo();
+    closeMenus();
+});
+
+document.getElementById('menu-redo').addEventListener('click', () => {
+    performRedo();
+    closeMenus();
+});
+
+document.querySelectorAll('.menu-trigger').forEach(trigger => {
+    trigger.addEventListener('click', (e) => {
+        const item = e.currentTarget.closest('.menu-item');
+        const isOpen = item.classList.contains('open');
+        closeMenus();
+        if (!isOpen) item.classList.add('open');
+        e.stopPropagation();
+    });
+});
+
+function closeMenus() {
+    document.querySelectorAll('.menu-item.open').forEach(el => el.classList.remove('open'));
 }
 
 // When the user clicks anywhere outside of the modal, close it
@@ -714,61 +758,119 @@ function toggleExportModal(on) {
 }
 
 //
-// IPC Event Functions
+// Project Load
 //
 
-window.electronAPI.onExportDirectorySelected((_, path) => {
-    const input = document.getElementById('export-directory-file-input');
-    input.value = path;
-});
-
-// Sends all information about the project so it can be saved
-window.electronAPI.saveProject((event, _) => {
-    event.sender.send('project:saveToFile', project);
-});
-
-// Handles a successful save message from the back end.
-window.electronAPI.onSaveCompleted((_, value) => {
-    const messageType = value.success ? MessageType.Information : MessageType.Error;
-    DisplayMessage(value.message, 2000, messageType);
-});
-
-// Event handler for when a request to load a project from a file is recieved.
-window.electronAPI.loadProjectFromFile((_, value) => {
+function loadProject(value) {
     project = value;
-    clearHistory(); // Clear undo/redo history for new project
+    clearHistory();
+    clipboardValue = { width: 0, height: 0, values: [] };
+    graphicalLayerSelect.innerHTML = '';
     applyMapDimensions();
     applyMapBackgroundColor();
     updateGraphicalTileLayers();
     setProjectSettingsForm();
-    tileSetSourceImage.src = project.tilesetImagePath;
+    tileSetSourceImage.src = project.tilesetImageData;
+}
+
+// On page load, read project from sessionStorage (set by landing page)
+const pendingProject = sessionStorage.getItem('pendingProject');
+if (pendingProject) {
+    sessionStorage.removeItem('pendingProject');
+    loadProject(JSON.parse(pendingProject));
+}
+
+// Open an existing .ddes project file from within the editor
+document.getElementById('open-project-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    loadProject(JSON.parse(text));
+    e.target.value = '';
 });
 
-window.electronAPI.loadNewProject((_, value) => {
-    project = {
-        name: value.name,
-        tileSize: value.tileSize,
-        mapWidth: value.mapWidth,
-        mapHeight: value.mapHeight,
-        graphicalTileLayers: [{ name: value.layerNames[0], index: 0, values: [] }, { name: value.layerNames[1], index: 1, values: [] }, { name: value.layerNames[2], index: 2, values: [] }],
-        collisionTiles: [],
-        tilesetImagePath: value.tilesetImagePath,
-        backgroundColor: defaultMapBackgroundColor
-    };
+//
+// Export
+//
 
-    clearHistory(); // Clear undo/redo history for new project
-    clipboardValue = { width: 0, height: 0, values: [] }; // Reset clipboard for new project
-    applyMapDimensions();
-    applyMapBackgroundColor();
-    updateGraphicalTileLayers();
-    setProjectSettingsForm();
-    tileSetSourceImage.src = project.tilesetImagePath;
-});
+async function exportProject(format) {
+    if (format === "JSON") {
+        const tileMap = new Map();
+        const getOrCreateTile = (x, y) => {
+            const key = `${x},${y}`;
+            if (!tileMap.has(key)) {
+                tileMap.set(key, { x, y, graphical_data: Array(project.graphicalTileLayers.length).fill(null), collidable: false });
+            }
+            return tileMap.get(key);
+        };
 
-window.electronAPI.exportComplete((_, value) => {
+        for (let layerIndex = 0; layerIndex < project.graphicalTileLayers.length; layerIndex++) {
+            for (const tile of project.graphicalTileLayers[layerIndex].values) {
+                const entry = getOrCreateTile(tile.X, tile.Y);
+                entry.graphical_data[layerIndex] = { TilesheetX: tile.TilesheetX, TilesheetY: tile.TilesheetY };
+            }
+        }
+
+        for (const tile of project.collisionTiles) {
+            const entry = getOrCreateTile(tile.X, tile.Y);
+            entry.collidable = true;
+        }
+
+        const exportData = {
+            projectName: project.name,
+            tileSize: project.tileSize,
+            mapWidth: project.mapWidth,
+            mapHeight: project.mapHeight,
+            layerOrder: project.graphicalTileLayers.map(l => l.name),
+            tiles: Array.from(tileMap.values()).sort((a, b) => a.y !== b.y ? a.y - b.y : a.x - b.x)
+        };
+
+        const zip = new JSZip();
+        zip.file(`${projectSlug()}-map-data.json`, JSON.stringify(exportData, null, 2));
+        zip.file('tileset.png', project.tilesetImageData.split(',')[1], { base64: true });
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${projectSlug()}-export.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+    } else if (format === "Custom Game Format") {
+        const zip = new JSZip();
+
+        for (const layer of project.graphicalTileLayers) {
+            const slug = layer.name.toLowerCase().replace(/\s+/g, '-');
+            let content = `# DUNGEON_DESIGNER_PROJECT_NAME: ${project.name}, CUSTOM_GAME_FORMAT: ${layer.name.toUpperCase()}_TILES\n`;
+            content += "# FORMAT: X, Y, TILESHEET_X, TILESHEET_Y\n";
+            for (const tile of layer.values) {
+                content += `${tile.X}, ${tile.Y}, ${tile.TilesheetX}, ${tile.TilesheetY}\n`;
+            }
+            zip.file(`${slug}-tiles.ddtf`, content);
+        }
+
+        let collisionContent = `# DUNGEON_DESIGNER_PROJECT_NAME: ${project.name}, CUSTOM_GAME_FORMAT: COLLISION_TILES\n`;
+        collisionContent += "# FORMAT: X, Y\n";
+        for (const tile of project.collisionTiles) {
+            collisionContent += `${tile.X}, ${tile.Y}\n`;
+        }
+
+        zip.file("collision-tiles.ddtf", collisionContent);
+        zip.file('tileset.png', project.tilesetImageData.split(',')[1], { base64: true });
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${projectSlug()}-export.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     toggleExportModal(false);
-    DisplayMessage(`Export to [${value}] Complete.`)
-});
+    DisplayMessage('Export complete.', 2000, MessageType.Information);
+}
 
 function setProjectSettingsForm() {
     let projectNameInput = document.getElementById('project-name-input');
@@ -778,7 +880,9 @@ function setProjectSettingsForm() {
 
     projectNameInput.value = project.name;
     projectWidthInput.value = project.mapWidth;
+    projectWidthInput.step = project.tileSize;
     projectHeightInput.value = project.mapHeight;
+    projectHeightInput.step = project.tileSize;
     mapBackgroundColorInput.value = project.backgroundColor;
 }
 
@@ -788,11 +892,23 @@ projectSettingsApplyButton.onclick = async () => {
     let projectHeightInput = document.getElementById('map-dimensions-height-input');
     let mapBackgroundColorInput = document.getElementById('map-background-color-input');
 
+    const newWidth = parseInt(projectWidthInput.value);
+    const newHeight = parseInt(projectHeightInput.value);
+
+    if (!newWidth || !newHeight || newWidth < 1 || newHeight < 1) {
+        DisplayMessage('Map dimensions must be positive numbers.', 2000, MessageType.Warning);
+        return;
+    }
+
+    if (newWidth % project.tileSize !== 0 || newHeight % project.tileSize !== 0) {
+        DisplayMessage(`Map dimensions must be multiples of the tile size (${project.tileSize}px).`, 2500, MessageType.Warning);
+        return;
+    }
+
     project.name = projectNameInput.value;
-    project.mapWidth = parseInt(projectWidthInput.value);
-    project.mapHeight = parseInt(projectHeightInput.value);
+    project.mapWidth = newWidth;
+    project.mapHeight = newHeight;
     project.backgroundColor = mapBackgroundColorInput.value;
-    await window.electronAPI.updateProjectName(project.name);
     applyMapDimensions();
     applyMapBackgroundColor();
     setTimeout(() => {

@@ -3,37 +3,13 @@
   "productName": "Dungeon Designer",
   "description": "Tile based map editor.",
   "keywords": [],
-  "main": "./main.js",
   "version": "1.0.0",
   "author": "Daniel Marshall",
   "license": "MIT",
   "scripts": {
-    "start": "electron . --no-sandbox",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "start": "npx serve ."
   },
-  "build": {
-    "appId": "com.danielmarshall.dungeon-designer",
-    "files": [
-      "**/*",
-      "!test/**",
-      "!.claude/**"
-    ],
-    "mac": {
-      "target": "dmg",
-      "icon": "Assets/dungeondesignericon.png"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "Assets/dungeondesignericon.ico"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "Assets/dungeondesignericon.png"
-    }
-  },
-  "devDependencies": {
-    "electron": "^40.6.0",
-    "electron-builder": "^24.13.3"
+  "dependencies": {
+    "jszip": "^3.10.1"
   }
 }

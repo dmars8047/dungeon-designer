@@ -16,65 +16,117 @@ let createNewProjectButton = document.getElementById('create-project-button');
 let projectNameInput = document.getElementById('project-name-input');
 let tileSizeSelect = document.getElementById('tile-size-select');
 let tilesetFileInput = document.getElementById('tileset-file-input');
+let tilesetFilePicker = document.getElementById('tileset-file-picker');
+let openProjectFilePicker = document.getElementById('open-project-file-picker');
 let importTilesetButton = document.getElementById('import-tileset-button');
 let mapDimensionsWidthInput = document.getElementById('map-dimensions-width-input');
 let mapDimensionsHeightInput = document.getElementById('map-dimensions-height-input');
-let layerNameInput = document.getElementById("layer-1-name-input");
-let layer2NameInput = document.getElementById("layer-2-name-input");
-let layer3NameInput = document.getElementById("layer-3-name-input");
+let layerCountSelect = document.getElementById('layer-count-select');
+let layerNameInputs = [
+    document.getElementById('layer-1-name-input'),
+    document.getElementById('layer-2-name-input'),
+    document.getElementById('layer-3-name-input'),
+    document.getElementById('layer-4-name-input'),
+    document.getElementById('layer-5-name-input'),
+];
+let layerNameRows = document.querySelectorAll('.layer-name-row');
 
-importTilesetButton.addEventListener('click', async () => {
-    let pathToTilset = await window.electronAPI.openFile();
-    if (pathToTilset) {
-        tilesetFileInput.value = pathToTilset;
-        tilesetFileInput.style.backgroundColor = '#fff';
-    }
+let tilesetImageData = null; // base64 data URI of the selected tileset PNG
+
+function setDefaultDimensions() {
+    const tileSize = parseInt(tileSizeSelect.value);
+    mapDimensionsWidthInput.value = tileSize * 10;
+    mapDimensionsHeightInput.value = tileSize * 10;
+    mapDimensionsWidthInput.step = tileSize;
+    mapDimensionsHeightInput.step = tileSize;
+}
+
+function updateLayerRows() {
+    const count = parseInt(layerCountSelect.value);
+    layerNameRows.forEach((row, i) => {
+        row.style.display = i < count ? 'contents' : 'none';
+    });
+}
+
+setDefaultDimensions();
+updateLayerRows();
+tileSizeSelect.addEventListener('change', setDefaultDimensions);
+layerCountSelect.addEventListener('change', updateLayerRows);
+
+importTilesetButton.addEventListener('click', () => {
+    tilesetFilePicker.click();
 });
 
-newProjectButton.addEventListener('click', async () => {
+tilesetFilePicker.addEventListener('change', async () => {
+    const file = tilesetFilePicker.files[0];
+    if (!file) return;
+
+    tilesetImageData = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+
+    tilesetFileInput.value = file.name;
+    tilesetFileInput.style.backgroundColor = '#fff';
+});
+
+newProjectButton.addEventListener('click', () => {
     landingMenuCard.style.display = 'none';
     newProjectCard.style.display = 'block';
-    window.electronAPI.expandWindowForProjectCreation();
 });
 
-cancelNewProjectButton.addEventListener('click', async () => {
+cancelNewProjectButton.addEventListener('click', () => {
     newProjectCard.style.display = 'none';
     landingMenuCard.style.display = 'block';
-    window.electronAPI.goBackFromProjectCreation();
 });
 
-// Handles when the user clicks the create button in the create project 'form'.
 createNewProjectButton.addEventListener('click', async () => {
     if (projectCreateFormIsValid()) {
-
-        var creationRequest = {
+        const layerCount = parseInt(layerCountSelect.value);
+        const project = {
             name: projectNameInput.value,
             tileSize: parseInt(tileSizeSelect.value),
-            layerNames: [layerNameInput.value, layer2NameInput.value, layer3NameInput.value],
-            tilesetImagePath: tilesetFileInput.value,
             mapWidth: parseInt(mapDimensionsWidthInput.value),
-            mapHeight: parseInt(mapDimensionsHeightInput.value)
+            mapHeight: parseInt(mapDimensionsHeightInput.value),
+            graphicalTileLayers: Array.from({ length: layerCount }, (_, i) => ({
+                name: layerNameInputs[i].value,
+                index: i,
+                values: []
+            })),
+            collisionTiles: [],
+            tilesetImageData: tilesetImageData,
+            backgroundColor: '#f4f8f9'
         };
 
-        await window.electronAPI.createNewProject(creationRequest);
+        sessionStorage.setItem('pendingProject', JSON.stringify(project));
+        window.location.href = 'main.html';
     }
 });
 
-projectNameInput.addEventListener('keyup', async () => {
+projectNameInput.addEventListener('keyup', () => {
     if (projectNameInput.value) {
         projectNameInput.style.backgroundColor = '#fff';
-    }
-    else {
+    } else {
         projectNameInput.style.backgroundColor = '#ffc8c4';
     }
 });
 
-loadProjectButton.addEventListener('click', async () => {
-    await window.electronAPI.openProject();
+loadProjectButton.addEventListener('click', () => {
+    openProjectFilePicker.click();
 });
 
-quitButton.addEventListener('click', async () => {
-    await window.electronAPI.quitApp();
+openProjectFilePicker.addEventListener('change', async () => {
+    const file = openProjectFilePicker.files[0];
+    if (!file) return;
+
+    const text = await file.text();
+    sessionStorage.setItem('pendingProject', text);
+    window.location.href = 'main.html';
+});
+
+quitButton.addEventListener('click', () => {
+    window.close();
 });
 
 newProjectLabel.addEventListener('click', () => newProjectButton.click());
@@ -112,7 +164,7 @@ function projectCreateFormIsValid() {
         if (!errorMessageText) {
             errorMessageText = 'Map dimensions must be between 1x1 and 10000x10000.';
         }
-        
+
         isValid = false;
     }
     else {
@@ -120,7 +172,19 @@ function projectCreateFormIsValid() {
         mapDimensionsWidthInput.style.backgroundColor = '#fff';
     }
 
-    if (!tilesetFileInput.value) {
+    if (isValid) {
+        const tileSize = parseInt(tileSizeSelect.value);
+        if (width % tileSize !== 0 || height % tileSize !== 0) {
+            mapDimensionsWidthInput.style.backgroundColor = width % tileSize !== 0 ? '#ffc8c4' : '#fff';
+            mapDimensionsHeightInput.style.backgroundColor = height % tileSize !== 0 ? '#ffc8c4' : '#fff';
+            if (!errorMessageText) {
+                errorMessageText = `Map dimensions must be multiples of the tile size (${tileSize}px).`;
+            }
+            isValid = false;
+        }
+    }
+
+    if (!tilesetImageData) {
         tilesetFileInput.style.backgroundColor = '#ffc8c4';
 
         if (!errorMessageText) {
@@ -133,40 +197,17 @@ function projectCreateFormIsValid() {
         tilesetFileInput.style.backgroundColor = '#fff';
     }
 
-    if (!layerNameInput.value) {
-        if (!errorMessageText) {
-            errorMessageText = 'A name is required for layer 1.';
+    const layerCount = parseInt(layerCountSelect.value);
+    for (let i = 0; i < layerCount; i++) {
+        if (!layerNameInputs[i].value) {
+            if (!errorMessageText) {
+                errorMessageText = `A name is required for layer ${i + 1}.`;
+            }
+            layerNameInputs[i].style.backgroundColor = '#ffc8c4';
+            isValid = false;
+        } else {
+            layerNameInputs[i].style.backgroundColor = '#fff';
         }
-
-        layerNameInput.style.backgroundColor = '#ffc8c4';
-        isValid = false;
-    }
-    else {
-        layerNameInput.style.backgroundColor = '#fff';
-    }
-
-    if (!layer2NameInput.value) {
-        if (!errorMessageText) {
-            errorMessageText = 'A name is required for layer 2.';
-        }
-
-        layer2NameInput.style.backgroundColor = '#ffc8c4';
-        isValid = false;
-    }
-    else {
-        layer2NameInput.style.backgroundColor = '#fff';
-    }
-
-    if (!layer3NameInput.value) {
-        if (!errorMessageText) {
-            errorMessageText = 'A name is required for layer 3.';
-        }
-
-        layer3NameInput.style.backgroundColor = '#ffc8c4';
-        isValid = false;
-    }
-    else {
-        layer3NameInput.style.backgroundColor = '#fff';
     }
 
     if (!isValid) {
