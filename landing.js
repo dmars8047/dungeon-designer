@@ -126,7 +126,7 @@ openProjectFilePicker.addEventListener('change', async () => {
 });
 
 quitButton.addEventListener('click', () => {
-    window.close();
+    window.open('', '_self').close();
 });
 
 newProjectLabel.addEventListener('click', () => newProjectButton.click());
