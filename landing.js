@@ -2,11 +2,11 @@ import { DisplayMessage, MessageType } from './modules/messaging.js';
 
 let newProjectButton = document.getElementById('new-project-button');
 let loadProjectButton = document.getElementById('load-project-button');
-let quitButton = document.getElementById('quit-button');
+let githubButton = document.getElementById('github-button');
 
 let newProjectLabel = document.getElementById('new-project-label');
 let loadProjectLabel = document.getElementById('load-project-label');
-let quitLabel = document.getElementById('quit-label');
+let githubLabel = document.getElementById('github-label');
 
 let landingMenuCard = document.getElementById('landing-menu-card');
 let newProjectCard = document.getElementById('new-project-card');
@@ -125,13 +125,13 @@ openProjectFilePicker.addEventListener('change', async () => {
     window.location.href = 'main.html';
 });
 
-quitButton.addEventListener('click', () => {
-    window.open('', '_self').close();
+githubButton.addEventListener('click', () => {
+    window.open('https://github.com/dmars8047/dungeon-designer', '_blank');
 });
 
 newProjectLabel.addEventListener('click', () => newProjectButton.click());
 loadProjectLabel.addEventListener('click', () => loadProjectButton.click());
-quitLabel.addEventListener('click', () => quitButton.click());
+githubLabel.addEventListener('click', () => githubButton.click());
 
 function projectCreateFormIsValid() {
     let isValid = true;
