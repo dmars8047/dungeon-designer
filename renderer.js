@@ -77,6 +77,7 @@ let mapMode = MapModes.Brush;
 
 let mapCursorPosition = [-1, -1];
 let mapCursorOverlay;  // CSS overlay div for map cursor
+let zoomLevel = 1;
 let lastSetTilePosition = [-1, -1];
 let selectedRect = { startX: 0, startY: 0, width: 0, height: 0, cells: [] };
 let clipboardValue = { width: 0, height: 0, values: [] };
@@ -187,6 +188,9 @@ window.onkeydown = (event) => {
                 case 'q':
                     changeMapMode(MapModes.Select);
                     break;
+                case '=':
+                    toggleZoom();
+                    break;
             }
         }
         else if (mapMode === MapModes.Paste) {
@@ -236,6 +240,8 @@ saveButton.onclick = async () => {
 exportToolButton.onclick = () => {
     toggleExportModal(true);
 }
+
+document.getElementById('zoom-btn').onclick = toggleZoom;
 
 async function callProjectSave() {
     const data = JSON.stringify(project);
@@ -938,10 +944,10 @@ function clearMapCursor() {
 }
 
 function drawSelectModeCursor(x, y, w, h) {
-    mapCursorOverlay.style.left = (x + mapCanvas.offsetLeft) + "px";
-    mapCursorOverlay.style.top = (y + mapCanvas.offsetTop) + "px";
-    mapCursorOverlay.style.width = w + "px";
-    mapCursorOverlay.style.height = h + "px";
+    mapCursorOverlay.style.left = (x * zoomLevel + mapCanvas.offsetLeft) + "px";
+    mapCursorOverlay.style.top = (y * zoomLevel + mapCanvas.offsetTop) + "px";
+    mapCursorOverlay.style.width = (w * zoomLevel) + "px";
+    mapCursorOverlay.style.height = (h * zoomLevel) + "px";
     mapCursorOverlay.style.borderColor = mapCursorColor;
     mapCursorOverlay.style.display = "block";
 }
@@ -949,10 +955,10 @@ function drawSelectModeCursor(x, y, w, h) {
 function drawMapCursor(x, y) {
     mapCursorPosition[0] = x;
     mapCursorPosition[1] = y;
-    mapCursorOverlay.style.left = (x + mapCanvas.offsetLeft) + "px";
-    mapCursorOverlay.style.top = (y + mapCanvas.offsetTop) + "px";
-    mapCursorOverlay.style.width = (project.tileSize * selectedTileSize[0]) + "px";
-    mapCursorOverlay.style.height = (project.tileSize * selectedTileSize[1]) + "px";
+    mapCursorOverlay.style.left = (x * zoomLevel + mapCanvas.offsetLeft) + "px";
+    mapCursorOverlay.style.top = (y * zoomLevel + mapCanvas.offsetTop) + "px";
+    mapCursorOverlay.style.width = (project.tileSize * selectedTileSize[0] * zoomLevel) + "px";
+    mapCursorOverlay.style.height = (project.tileSize * selectedTileSize[1] * zoomLevel) + "px";
     mapCursorOverlay.style.borderColor = mapCursorColor;
     mapCursorOverlay.style.display = "block";
 }
@@ -977,6 +983,19 @@ function applyMapDimensions() {
 
     mapCanvas.width = project.mapWidth;
     mapCanvas.height = project.mapHeight;
+    applyZoom();
+}
+
+function applyZoom() {
+    mapCanvas.style.width  = (project.mapWidth  * zoomLevel) + 'px';
+    mapCanvas.style.height = (project.mapHeight * zoomLevel) + 'px';
+}
+
+function toggleZoom() {
+    zoomLevel = zoomLevel === 1 ? 2 : 1;
+    document.getElementById('zoom-btn').textContent = zoomLevel + 'x';
+    applyZoom();
+    drawMapCursor(mapCursorPosition[0], mapCursorPosition[1]);
 }
 
 function applyMapBackgroundColor() {
@@ -1095,8 +1114,8 @@ function getMouseCoordinatesOnMap(event) {
     }
 
     const { x, y } = event.target.getBoundingClientRect();
-    const mouseX = Math.floor((event.clientX - x) / project.tileSize) * project.tileSize;
-    const mouseY = Math.floor((event.clientY - y) / project.tileSize) * project.tileSize;
+    const mouseX = Math.floor((event.clientX - x) / (project.tileSize * zoomLevel)) * project.tileSize;
+    const mouseY = Math.floor((event.clientY - y) / (project.tileSize * zoomLevel)) * project.tileSize;
 
     if (mouseX === mapCursorPosition[0] && mouseY === mapCursorPosition[1]) {
         allowDrawMapCursor = false;
